@@ -189,7 +189,10 @@ static NSDateFormatter *dateFormatter = nil;
 	bitsPerComponent = 8;
 	colorSpaceRef = CGColorSpaceCreateDeviceRGB();
 	
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wenum-conversion"
 	bitmapContext = CGBitmapContextCreate(NULL, newWidth, newHeight, bitsPerComponent, bytesPerRow, colorSpaceRef, newAlphaInfo);
+#pragma clang diagnostic pop
 	CGColorSpaceRelease(colorSpaceRef), colorSpaceRef = NULL;
 	CGContextSetInterpolationQuality(bitmapContext, kCGInterpolationHigh);
 	
