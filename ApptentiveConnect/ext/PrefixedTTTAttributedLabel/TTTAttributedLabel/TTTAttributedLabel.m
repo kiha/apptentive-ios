@@ -106,7 +106,11 @@ static inline NSDictionary * NSAttributedStringAttributesFromLabel(TTTATTRIBUTED
 
         [mutableAttributes setObject:(id)[label.textColor CGColor] forKey:(NSString *)kCTForegroundColorAttributeName];
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wenum-conversion"
         CTTextAlignment alignment = CTTextAlignmentFromUITextAlignment(label.textAlignment);
+#pragma clang diagnostic pop
+
         CGFloat lineSpacing = label.leading;
         CGFloat lineSpacingAdjustment = ceilf(label.font.lineHeight - label.font.ascender + label.font.descender);
         CGFloat lineHeightMultiple = label.lineHeightMultiple;
@@ -120,7 +124,10 @@ static inline NSDictionary * NSAttributedStringAttributesFromLabel(TTTATTRIBUTED
         if (label.numberOfLines != 1) {
             lineBreakMode = CTLineBreakModeFromUILineBreakMode(UILineBreakModeWordWrap);
         } else {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wenum-conversion"
             lineBreakMode = CTLineBreakModeFromUILineBreakMode(label.lineBreakMode);
+#pragma clang diagnostic pop
         }
 
         CTParagraphStyleSetting paragraphStyles[10] = {
@@ -538,8 +545,11 @@ static inline NSAttributedString * NSAttributedStringBySettingColorFromContext(N
                 // Get correct truncationType and attribute position
                 CTLineTruncationType truncationType;
                 NSUInteger truncationAttributePosition = lastLineRange.location;
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wenum-conversion"
                 UILineBreakMode lineBreakMode = self.lineBreakMode;
-                
+#pragma clang diagnostic pop
+
                 // Multiple lines, only use UILineBreakModeTailTruncation
                 if (numberOfLines != 1) {
                     lineBreakMode = UILineBreakModeTailTruncation;
