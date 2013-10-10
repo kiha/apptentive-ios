@@ -15,7 +15,6 @@
 #import "ATSurveyParser.h"
 #import "ATSurveyViewController.h"
 #import "ATTaskQueue.h"
-#import "PJSONKit.h"
 
 NSString *const ATSurveySentSurveysPreferenceKey = @"ATSurveySentSurveysPreferenceKey";
 NSString *const ATSurveyCachedSurveysExpirationPreferenceKey = @"ATSurveyCachedSurveysExpirationPreferenceKey";
@@ -165,11 +164,7 @@ NSString *const ATSurveyCachedSurveysExpirationPreferenceKey = @"ATSurveyCachedS
 	@synchronized(self) {
 		for (ATSurvey *survey in availableSurveys) {
 			if ([survey surveyHasNoTags]) {
-				if (![self surveyAlreadySubmitted:survey]) {
-					result = survey;
-				} else if (![survey multipleResponsesAllowed] || ![survey isActive]) {
-					continue;
-				} else {
+				if ([survey isEligibleToBeShown]) {
 					result = survey;
 				}
 			}
@@ -183,12 +178,7 @@ NSString *const ATSurveyCachedSurveysExpirationPreferenceKey = @"ATSurveyCachedS
 	@synchronized(self) {
 		for (ATSurvey *survey in availableSurveys) {
 			if ([survey surveyHasTags:tags]) {
-				if (![self surveyAlreadySubmitted:survey]) {
-					result = survey;
-					break;
-				} else if (![survey multipleResponsesAllowed] || ![survey isActive]) {
-					continue;
-				} else {
+				if ([survey isEligibleToBeShown]) {
 					result = survey;
 				}
 			}

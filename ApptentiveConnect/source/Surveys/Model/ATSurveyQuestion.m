@@ -23,11 +23,13 @@
 @synthesize selectedAnswerChoices;
 @synthesize minSelectionCount;
 @synthesize maxSelectionCount;
+@synthesize multiline;
 
 - (id)init {
 	if ((self = [super init])) {
 		answerChoices = [[NSMutableArray alloc] init];
 		selectedAnswerChoices = [[NSMutableArray alloc] init];
+		self.multiline = YES;
 	}
 	return self;
 }
@@ -53,6 +55,11 @@
 			self.answerText = [coder decodeObjectForKey:@"answerText"];
 			self.minSelectionCount = [(NSNumber *)[coder decodeObjectForKey:@"minSelectionCount"] unsignedIntegerValue];
 			self.maxSelectionCount = [(NSNumber *)[coder decodeObjectForKey:@"maxSelectionCount"] unsignedIntegerValue];
+			if ([coder decodeObjectForKey:@"multiline"]) {
+				self.multiline = [(NSNumber *)[coder decodeObjectForKey:@"multiline"] boolValue];
+			} else {
+				self.multiline = YES;
+			}
 		} else {
 			[self release];
 			return nil;
@@ -73,6 +80,7 @@
 	[coder encodeObject:answerText forKey:@"answerText"];
 	[coder encodeObject:[NSNumber numberWithUnsignedInteger:minSelectionCount] forKey:@"minSelectionCount"];
 	[coder encodeObject:[NSNumber numberWithUnsignedInteger:maxSelectionCount] forKey:@"maxSelectionCount"];
+	[coder encodeObject:[NSNumber numberWithBool:self.multiline] forKey:@"multiline"];
 }
 
 - (void)dealloc {
@@ -115,10 +123,12 @@
 			error = ATSurveyQuestionValidationErrorMissingRequiredAnswer;
 		}
 	} else if (self.type == ATSurveyQuestionTypeMultipleSelect) {
-		if (self.responseIsRequired) {
-			if (minSelectionCount != 0 && [self.selectedAnswerChoices count] < minSelectionCount) {
+		NSUInteger answerCount = [self.selectedAnswerChoices count];
+		
+		if (self.responseIsRequired || answerCount > 0) {
+			if (minSelectionCount != 0 && answerCount < minSelectionCount) {
 				error = ATSurveyQuestionValidationErrorTooFewAnswers;
-			} else if (maxSelectionCount != 0 && [self.selectedAnswerChoices count] > maxSelectionCount) {
+			} else if (maxSelectionCount != 0 && answerCount > maxSelectionCount) {
 				error = ATSurveyQuestionValidationErrorTooManyAnswers;
 			}
 		}

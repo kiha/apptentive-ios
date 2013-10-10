@@ -13,6 +13,14 @@ NSString *const ATConfigurationPreferencesChangedNotification;
 NSString *const ATAppConfigurationLastUpdatePreferenceKey;
 NSString *const ATAppConfigurationExpirationPreferenceKey;
 NSString *const ATAppConfigurationMetricsEnabledPreferenceKey;
+NSString *const ATAppConfigurationMessageCenterEnabledKey;
+
+NSString *const ATAppConfigurationMessageCenterTitleKey;
+NSString *const ATAppConfigurationMessageCenterForegroundRefreshIntervalKey;
+NSString *const ATAppConfigurationMessageCenterBackgroundRefreshIntervalKey;
+NSString *const ATAppConfigurationMessageCenterEmailRequiredKey;
+
+NSString *const ATAppConfigurationAppDisplayNameKey;
 
 @protocol ATAppConfigurationUpdaterDelegate <NSObject>
 - (void)configurationUpdaterDidFinish:(BOOL)success;
