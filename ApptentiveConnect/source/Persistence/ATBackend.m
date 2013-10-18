@@ -918,6 +918,9 @@ NSString *const ATInfoDistributionVersionKey = @"ATInfoDistributionVersionKey";
 			if (![self isReady]) {
 				return;
 			}
+			if (!self.working) {
+				return;
+			}
 			ATTaskQueue *queue = [ATTaskQueue sharedTaskQueue];
 			if (![queue hasTaskOfClass:[ATGetMessagesTask class]]) {
 				ATGetMessagesTask *task = [[ATGetMessagesTask alloc] init];
