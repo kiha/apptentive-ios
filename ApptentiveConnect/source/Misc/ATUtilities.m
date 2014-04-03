@@ -15,6 +15,9 @@
 #include <sys/sysctl.h>
 #endif
 #include <stdlib.h>
+#if TARGET_OS_IPHONE
+#import <sys/utsname.h>
+#endif
 
 #define KINDA_EQUALS(a, b) (fabs(a - b) < 0.1)
 #define DEG_TO_RAD(angle) ((M_PI * angle) / 180.0)
@@ -28,26 +31,31 @@ static NSDateFormatter *dateFormatter = nil;
 
 @implementation ATUtilities
 
++ (UIImage *)imageByTakingScreenshot {
+	return [self imageByTakingScreenshotExcludingWindow:nil];
+}
+
 #if TARGET_OS_IPHONE
 // From QA1703:
 // http://developer.apple.com/library/ios/#qa/qa1703/_index.html
 // with changes to account for the application frame.
-+ (UIImage*)imageByTakingScreenshot {
+//TODO: Use iOS 7 snapshotting API.
++ (UIImage *)imageByTakingScreenshotExcludingWindow:(UIWindow *)excludedWindow {
 	// Create a graphics context with the target size
 	// On iOS 4 and later, use UIGraphicsBeginImageContextWithOptions to take the scale into consideration
 	// On iOS prior to 4, fall back to use UIGraphicsBeginImageContext
 	CGRect applicationFrame = [[UIScreen mainScreen] applicationFrame];
 	CGSize imageSize = applicationFrame.size;
-	if (NULL != UIGraphicsBeginImageContextWithOptions) {
-		UIGraphicsBeginImageContextWithOptions(imageSize, NO, 0.0);
-	} else {
-		UIGraphicsBeginImageContext(imageSize);
-	}
+	UIGraphicsBeginImageContextWithOptions(imageSize, NO, 0.0);
 	
 	CGContextRef context = UIGraphicsGetCurrentContext();
 	
 	// Iterate over every window from back to front
 	for (UIWindow *window in [[UIApplication sharedApplication] windows])  {
+		if (window == excludedWindow) {
+			continue;
+		}
+		
 		if (![window respondsToSelector:@selector(screen)] || [window screen] == [UIScreen mainScreen]) {
 			// -renderInContext: renders in the coordinate space of the layer,
 			// so we must first apply the layer's geometry to the graphics context
@@ -76,6 +84,63 @@ static NSDateFormatter *dateFormatter = nil;
 	
 	UIGraphicsEndImageContext();
 	return image;
+}
+
++ (UIImage *)imageByTakingScreenshotIncludingBlankStatusBarArea:(BOOL)includeStatusBar excludingWindow:(UIWindow *)window {
+	UIImage *screenshot = [self imageByTakingScreenshotExcludingWindow:window];
+
+	if (includeStatusBar) {
+		CGSize screenSize = [[UIScreen mainScreen] bounds].size;
+		UIGraphicsBeginImageContextWithOptions(screenSize, NO, 0);
+		
+		CGSize statusBarSize = [[UIApplication sharedApplication] statusBarFrame].size;
+		CGFloat statusBarHeight = MIN(statusBarSize.width, statusBarSize.height);
+		
+		CGPoint origin;
+		UIInterfaceOrientation orientation = [[UIApplication sharedApplication] statusBarOrientation];
+		switch (orientation) {
+			case UIInterfaceOrientationPortrait:
+				origin = CGPointMake(0, statusBarHeight);
+				break;
+			case UIInterfaceOrientationPortraitUpsideDown:
+				origin = CGPointMake(0, 0);
+				break;
+			case UIInterfaceOrientationLandscapeLeft:
+				origin = CGPointMake(statusBarHeight, 0);
+				break;
+			case UIInterfaceOrientationLandscapeRight:
+				origin = CGPointMake(0, 0);
+				break;
+		}
+		[screenshot drawAtPoint:origin];
+		UIImage *screenshotPlusStatusBar = UIGraphicsGetImageFromCurrentImageContext();
+		UIGraphicsEndImageContext();
+		
+		screenshot = screenshotPlusStatusBar;
+	}
+	
+	return screenshot;
+}
+
++ (UIImage *)imageByRotatingImage:(UIImage *)image toInterfaceOrientation:(UIInterfaceOrientation)orientation {
+	UIImageOrientation imageOrientation = UIImageOrientationUp;
+	switch (orientation) {
+		case UIInterfaceOrientationPortrait:
+			imageOrientation = UIImageOrientationUp;
+			break;
+		case UIInterfaceOrientationPortraitUpsideDown:
+			imageOrientation = UIImageOrientationDown;
+			break;
+		case UIInterfaceOrientationLandscapeLeft:
+			imageOrientation = UIImageOrientationRight;
+			break;
+		case UIInterfaceOrientationLandscapeRight:
+			imageOrientation = UIImageOrientationLeft;
+			break;
+	}
+	UIImage *rotated = [[[UIImage alloc] initWithCGImage:[image CGImage] scale:1 orientation:imageOrientation] autorelease];
+	
+	return rotated;
 }
 
 + (UIImage *)imageByRotatingImage:(UIImage *)image byRadians:(CGFloat)radians {
@@ -247,6 +312,7 @@ static NSDateFormatter *dateFormatter = nil;
 	} while (NO);
 	return result;
 }
+
 #elif TARGET_OS_MAC
 
 + (NSData *)pngRepresentationOfImage:(NSImage *)image {
@@ -260,7 +326,9 @@ static NSDateFormatter *dateFormatter = nil;
 
 + (NSString *)currentMachineName {
 #if TARGET_OS_IPHONE
-	return [[UIDevice currentDevice] model];
+	struct utsname systemInfo;
+	uname(&systemInfo);
+	return [NSString stringWithCString:systemInfo.machine encoding:NSUTF8StringEncoding];
 #elif TARGET_OS_MAC
 	char modelBuffer[256];
 	size_t sz = sizeof(modelBuffer);
@@ -272,6 +340,7 @@ static NSDateFormatter *dateFormatter = nil;
 	return result;
 #endif
 }
+
 + (NSString *)currentSystemName {
 #if TARGET_OS_IPHONE
 	return [[UIDevice currentDevice] systemName];
@@ -500,6 +569,27 @@ static NSDateFormatter *dateFormatter = nil;
 	return localAppLocalizations;
 }
 
++ (UIImage *)appIcon {
+	static UIImage *iconFile = nil;
+	static dispatch_once_t onceToken;
+	dispatch_once(&onceToken, ^{
+		NSArray *iconFiles = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleIconFiles"];
+		UIImage *maxImage = nil;
+		for (NSString *path in iconFiles) {
+			UIImage *image = [UIImage imageNamed:path];
+			if (maxImage == nil || maxImage.size.width < image.size.width) {
+				if (image.size.width >= 512) {
+					// Just in case someone stuck iTunesArtwork in there.
+					continue;
+				}
+				maxImage = image;
+			}
+		}
+		iconFile = [maxImage retain];
+	});
+	return [[iconFile retain] autorelease];
+}
+
 + (BOOL)bundleVersionIsMainVersion {
 	BOOL result = NO;
 	NSDictionary *infoDictionary = [[NSBundle mainBundle] infoDictionary];
@@ -662,6 +752,10 @@ done:
 #endif
 
 + (BOOL)emailAddressIsValid:(NSString *)emailAddress {
+	if (!emailAddress) {
+		return NO;
+	}
+	
 	NSError *error = nil;
 	NSRegularExpression *regex = [NSRegularExpression regularExpressionWithPattern:@"^\\s*[^\\s@]+@[^\\s@]+\\s*$" options:NSRegularExpressionCaseInsensitive error:&error];
 	if (!regex) {
@@ -669,11 +763,9 @@ done:
 		return NO;
 	}
 	NSUInteger count = [regex numberOfMatchesInString:emailAddress options:NSMatchingAnchored range:NSMakeRange(0, [emailAddress length])];
-	if (count == 0) {
-		return NO;
-	} else {
-		return YES;
-	}
+	BOOL isValid = (count > 0);
+	
+	return isValid;
 }
 @end
 
@@ -708,7 +800,7 @@ extern CGRect ATCGRectOfEvenSize(CGRect inRect) {
 }
 
 CGSize ATThumbnailSizeOfMaxSize(CGSize imageSize, CGSize maxSize) {
-    CGFloat ratio = MIN(maxSize.width/imageSize.width, maxSize.height/imageSize.height);
+	CGFloat ratio = MIN(maxSize.width/imageSize.width, maxSize.height/imageSize.height);
 	if (ratio < 1.0) {
 		return CGSizeMake(floor(ratio * imageSize.width), floor(ratio * imageSize.height));
 	} else {
@@ -717,7 +809,7 @@ CGSize ATThumbnailSizeOfMaxSize(CGSize imageSize, CGSize maxSize) {
 }
 
 CGRect ATThumbnailCropRectForThumbnailSize(CGSize imageSize, CGSize thumbnailSize) {
-    CGFloat cropRatio = thumbnailSize.width/thumbnailSize.height;
+	CGFloat cropRatio = thumbnailSize.width/thumbnailSize.height;
 	CGFloat sizeRatio = imageSize.width/imageSize.height;
 	
 	if (cropRatio < sizeRatio) {

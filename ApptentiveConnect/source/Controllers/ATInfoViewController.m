@@ -21,6 +21,14 @@
 #import "ATTaskQueue.h"
 #import "ATTextMessage.h"
 
+// Can't get CocoaPods to do the right thing for debug builds.
+// So, do it explicitly.
+#if COCOAPODS
+#    if DEBUG
+#	     define APPTENTIVE_DEBUG_LOG_VIEWER 1
+#    endif
+#endif
+
 enum {
 	kSectionTasks,
 	kSectionDebugLog,
@@ -88,21 +96,19 @@ enum {
 	[self setGotoPrivacyPolicyButton:nil];
 	[super viewDidUnload];
 	[headerView release], headerView = nil;
+	self.tableView.delegate = nil;
+	self.tableView.dataSource = nil;
 	self.tableView = nil;
 }
 
 - (void)viewWillDisappear:(BOOL)animated {
 	[super viewWillDisappear:animated];
+	[[NSNotificationCenter defaultCenter] postNotificationName:ATFeedbackDidHideWindowNotification object:self userInfo:[NSDictionary dictionaryWithObject:[NSNumber numberWithInt:ATFeedbackWindowTypeInfo] forKey:ATFeedbackWindowTypeKey]];
 }
 
 - (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation {
 	// Return YES for supported orientations
 	return YES;
-}
-
-- (IBAction)done:(id)sender {
-	[self dismissModalViewControllerAnimated:YES];
-	[[NSNotificationCenter defaultCenter] postNotificationName:ATFeedbackDidHideWindowNotification object:self userInfo:[NSDictionary dictionaryWithObject:[NSNumber numberWithInt:ATFeedbackWindowTypeInfo] forKey:ATFeedbackWindowTypeKey]];
 }
 
 - (IBAction)openApptentiveDotCom:(id)sender {
@@ -120,10 +126,8 @@ enum {
 	if (section == kSectionDebugLog) {
 		showingDebugController = YES;
 		ATLogViewController *vc = [[ATLogViewController alloc] init];
-		UINavigationController *nc = [[UINavigationController alloc] initWithRootViewController:vc];
-		[self presentModalViewController:nc animated:YES];
+		[self.navigationController pushViewController:vc animated:YES];
 		[vc release], vc = nil;
-		[nc release], nc = nil;
 	}
 	[aTableView deselectRowAtIndexPath:indexPath animated:YES];
 }
@@ -268,12 +272,14 @@ enum {
 	
 	
 	self.navigationItem.title = ATLocalizedString(@"About Apptentive", @"About Apptentive");
-	self.navigationItem.rightBarButtonItem = [[[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemDone target:self action:@selector(done:)] autorelease];
 	self.apptentiveDescriptionTextView.text = ATLocalizedString(@"Apptentive is a feedback and communication service which allows the people who make this app to quickly get your feedback and better listen to you.", @"Description of Apptentive service in information screen.");
 	[self.findOutMoreButton setTitle:ATLocalizedString(@"Find out more at apptentive.com", @"Title of button to open Apptentive.com") forState:UIControlStateNormal];
 	self.apptentivePrivacyTextView.text = ATLocalizedString(@"Your feedback is hosted by Apptentive and is subject to Apptentive's privacy policy and the privacy policy of the developer of this app.", @"Description of Apptentive privacy policy.");
 	[self.gotoPrivacyPolicyButton setTitle:ATLocalizedString(@"Go to Apptentive's Privacy Policy", @"Title for button to open Apptentive's privacy policy") forState:UIControlStateNormal];
 	
+	if ([tableView respondsToSelector:@selector(setAccessibilityIdentifier:)]) {
+		[tableView setAccessibilityIdentifier:@"ATInfoViewTable"];
+	}
 	tableView.delegate = self;
 	tableView.dataSource = self;
 	tableView.tableHeaderView = self.headerView;
@@ -283,6 +289,8 @@ enum {
 - (void)teardown {
 	[[NSNotificationCenter defaultCenter] removeObserver:self];
 	[headerView release], headerView = nil;
+	tableView.delegate = nil;
+	tableView.dataSource = nil;
 	[tableView release], tableView = nil;
 }
 

@@ -10,7 +10,9 @@
 #import "ATConnect_Private.h"
 #import "ATBackend.h"
 #import "ATContactStorage.h"
+#import "ATEngagementBackend.h"
 #import "ATFeedback.h"
+#import "ATInteraction.h"
 #import "ATUtilities.h"
 #import "ATAppConfigurationUpdater.h"
 #if TARGET_OS_IPHONE
@@ -23,8 +25,14 @@ NSString *const ATMessageCenterUnreadCountChangedNotification = @"ATMessageCente
 NSString *const ATInitialUserNameKey = @"ATInitialUserNameKey";
 NSString *const ATInitialUserEmailAddressKey = @"ATInitialUserEmailAddressKey";
 
+NSString *const ATIntegrationKeyUrbanAirship = @"urban_airship";
+NSString *const ATIntegrationKeyKahuna = @"kahuna";
+
 @implementation ATConnect
 @synthesize apiKey, showTagline, showEmailField, initialUserName, initialUserEmailAddress, customPlaceholderText, useMessageCenter;
+#if TARGET_OS_IPHONE
+@synthesize tintColor;
+#endif
 
 + (ATConnect *)sharedConnection {
 	static ATConnect *sharedConnection = nil;
@@ -41,17 +49,22 @@ NSString *const ATInitialUserEmailAddressKey = @"ATInitialUserEmailAddressKey";
 		self.showTagline = YES;
 		customPersonData = [[NSMutableDictionary alloc] init];
 		customDeviceData = [[NSMutableDictionary alloc] init];
+		integrationConfiguration = [[NSMutableDictionary alloc] init];
 		useMessageCenter = YES;
+		_initiallyUseMessageCenter = YES;
 		
-		NSDictionary *defaults = @{ATAppConfigurationMessageCenterEnabledKey : [NSNumber numberWithBool:YES],
+		NSDictionary *defaults = @{ATAppConfigurationMessageCenterEnabledKey : [NSNumber numberWithBool:_initiallyUseMessageCenter],
 								   ATAppConfigurationMessageCenterEmailRequiredKey : [NSNumber numberWithBool:NO]};
 		[[NSUserDefaults standardUserDefaults] registerDefaults:defaults];
+		
+		ATLogInfo(@"Apptentive SDK Version %@", kATConnectVersionString);
 	}
 	return self;
 }
 
 - (void)dealloc {
 #if TARGET_OS_IPHONE
+	[tintColor release], tintColor = nil;
 #elif IF_TARGET_OS_MAC
 	if (feedbackWindowController) {
 		[feedbackWindowController release];
@@ -60,6 +73,7 @@ NSString *const ATInitialUserEmailAddressKey = @"ATInitialUserEmailAddressKey";
 #endif
 	[customPersonData release], customPersonData = nil;
 	[customDeviceData release], customDeviceData = nil;
+	[integrationConfiguration release], integrationConfiguration = nil;
 	[customPlaceholderText release], customPlaceholderText = nil;
 	[apiKey release], apiKey = nil;
 	[initialUserName release], initialUserName = nil;
@@ -74,6 +88,11 @@ NSString *const ATInitialUserEmailAddressKey = @"ATInitialUserEmailAddressKey";
 		apiKey = [anAPIKey retain];
 		[[ATBackend sharedBackend] setApiKey:self.apiKey];
 	}
+}
+
+- (void)setInitiallyUseMessageCenter:(BOOL)initiallyUseMessageCenter {
+	[[NSUserDefaults standardUserDefaults] registerDefaults:@{ATAppConfigurationMessageCenterEnabledKey: @(initiallyUseMessageCenter)}];
+	_initiallyUseMessageCenter = initiallyUseMessageCenter;
 }
 
 - (void)setInitialUserName:(NSString *)anInitialUserName {
@@ -102,16 +121,17 @@ NSString *const ATInitialUserEmailAddressKey = @"ATInitialUserEmailAddressKey";
 		return;
 	}
 		
-	if (initialUserEmailAddress != anInitialUserEmailAddress) {		
+	if (![initialUserEmailAddress isEqualToString:anInitialUserEmailAddress]) {
 		[initialUserEmailAddress release];
 		initialUserEmailAddress = nil;
 		initialUserEmailAddress = [anInitialUserEmailAddress retain];
 		
-		// Set person object's email. Only overwrites previous *initial* emails.
-		NSString *previousInitialUserEmailAddress = [[NSUserDefaults standardUserDefaults] objectForKey:ATInitialUserEmailAddressKey];
 		if ([ATPersonInfo personExists]) {
 			ATPersonInfo *person = [ATPersonInfo currentPerson];
-			if (!person.emailAddress || [person.emailAddress isEqualToString:previousInitialUserEmailAddress]) {
+			
+			// Only overwrites previous *initial* emails.
+			NSString *previousInitialUserEmailAddress = [[NSUserDefaults standardUserDefaults] objectForKey:ATInitialUserEmailAddressKey];
+			if (!person.emailAddress || ([person.emailAddress caseInsensitiveCompare:previousInitialUserEmailAddress] == NSOrderedSame)) {
 				person.emailAddress = initialUserEmailAddress;
 				person.needsUpdate = YES;
 				[person saveAsCurrentPerson];
@@ -119,6 +139,18 @@ NSString *const ATInitialUserEmailAddressKey = @"ATInitialUserEmailAddressKey";
 		}
 		[[NSUserDefaults standardUserDefaults] setObject:initialUserEmailAddress forKey:ATInitialUserEmailAddressKey];
 	}
+}
+
+- (void)sendAttachmentText:(NSString *)text {
+    [[ATBackend sharedBackend] sendTextMessageWithBody:text hiddenOnClient:YES completion:nil];
+}
+
+- (void)sendAttachmentImage:(UIImage *)image {
+	[[ATBackend sharedBackend] sendImageMessageWithImage:image hiddenOnClient:YES fromSource:ATFeedbackImageSourceProgrammatic];
+}
+
+- (void)sendAttachmentFile:(NSData *)fileData withMimeType:(NSString *)mimeType {
+	[[ATBackend sharedBackend] sendFileMessageWithFileData:fileData andMimeType:mimeType hiddenOnClient:YES fromSource:ATFIleAttachmentSourceProgrammatic];
 }
 
 - (NSDictionary *)customPersonData {
@@ -146,11 +178,12 @@ NSString *const ATInitialUserEmailAddressKey = @"ATInitialUserEmailAddressKey";
 	BOOL allowedData = ([object isKindOfClass:[NSString class]] ||
 						[object isKindOfClass:[NSNumber class]] ||
 						[object isKindOfClass:[NSNull class]]);
-	
-	NSAssert(allowedData, @"Apptentive custom data must be of type NSString, NSNumber, NSDate, or NSNull. Attempted to add custom data of type %@", NSStringFromClass([object class]));
-	
+		
 	if (allowedData) {
 		[customData setObject:object forKey:key];
+	}
+	else {
+		ATLogError(@"Apptentive custom data must be of type NSString, NSNumber, NSDate, or NSNull. Attempted to add custom data of type %@", NSStringFromClass([object class]));
 	}
 }
 
@@ -170,6 +203,32 @@ NSString *const ATInitialUserEmailAddressKey = @"ATInitialUserEmailAddressKey";
 	[self removeCustomDeviceDataWithKey:key];
 }
 
+- (NSDictionary *)integrationConfiguration {
+	return integrationConfiguration;
+}
+
+- (void)addIntegration:(NSString *)integration withConfiguration:(NSDictionary *)configuration {
+	[integrationConfiguration setObject:configuration forKey:integration];
+}
+
+- (void)addIntegration:(NSString *)integration withDeviceToken:(NSData *)deviceToken {
+    const unsigned *tokenBytes = [deviceToken bytes];
+    NSString *token = [NSString stringWithFormat:@"%08x%08x%08x%08x%08x%08x%08x%08x",
+                       ntohl(tokenBytes[0]), ntohl(tokenBytes[1]), ntohl(tokenBytes[2]),
+                       ntohl(tokenBytes[3]), ntohl(tokenBytes[4]), ntohl(tokenBytes[5]),
+                       ntohl(tokenBytes[6]), ntohl(tokenBytes[7])];
+	
+	[[ATConnect sharedConnection] addIntegration:integration withConfiguration:@{@"token": token}];
+}
+
+- (void)removeIntegration:(NSString *)integration {
+	[integrationConfiguration removeObjectForKey:integration];
+}
+
+- (void)addUrbanAirshipIntegrationWithDeviceToken:(NSData *)deviceToken {
+	[self addIntegration:ATIntegrationKeyUrbanAirship withDeviceToken:deviceToken];
+}
+
 - (BOOL)messageCenterEnabled {
 	return [[[NSUserDefaults standardUserDefaults] objectForKey:ATAppConfigurationMessageCenterEnabledKey] boolValue];
 }
@@ -179,15 +238,56 @@ NSString *const ATInitialUserEmailAddressKey = @"ATInitialUserEmailAddressKey";
 }
 
 #if TARGET_OS_IPHONE
+
+- (BOOL)engage:(NSString *)codePoint fromViewController:(UIViewController *)viewController {
+	return [[ATEngagementBackend sharedBackend] engage:codePoint fromViewController:viewController];
+}
+
 - (void)presentMessageCenterFromViewController:(UIViewController *)viewController {
 	[[ATBackend sharedBackend] presentMessageCenterFromViewController:viewController];
 }
 
+- (void)presentMessageCenterFromViewController:(UIViewController *)viewController withCustomData:(NSDictionary *)customData {
+	NSMutableDictionary *allowedCustomMessageData = [NSMutableDictionary dictionary];
+	
+	for (NSString *key in [customData allKeys]) {
+		[self addCustomData:[customData objectForKey:key] withKey:key toCustomDataDictionary:allowedCustomMessageData];
+	}
+	
+	[[ATBackend sharedBackend] presentMessageCenterFromViewController:viewController withCustomData:allowedCustomMessageData];
+}
+
+- (void)didReceiveRemoteNotification:(NSDictionary *)userInfo fromViewController:(UIViewController *)viewController {
+	NSDictionary *apptentivePayload = [userInfo objectForKey:@"apptentive"];
+	if (apptentivePayload) {
+		NSString *action = [apptentivePayload objectForKey:@"action"];
+		
+		if ([action isEqualToString:@"pmc"]) {
+			[self presentMessageCenterFromViewController:viewController];
+		}
+	}
+}
+
 - (void)presentFeedbackDialogFromViewController:(UIViewController *)viewController {
-	NSString *title = ATLocalizedString(@"Give Feedback", @"First feedback screen title.");
+	NSString *title = ATLocalizedString(@"Give Feedback", @"Title of feedback screen.");
 	NSString *body = [NSString stringWithFormat:ATLocalizedString(@"Please let us know how to make %@ better for you!", @"Feedback screen body. Parameter is the app name."), [[ATBackend sharedBackend] appName]];
 	NSString *placeholder = ATLocalizedString(@"How can we help? (required)", @"First feedback placeholder text.");
 	[[ATBackend sharedBackend] presentIntroDialogFromViewController:viewController withTitle:title prompt:body placeholderText:placeholder];
+}
+
+
+- (void)presentUpgradeDialogFromViewControllerIfAvailable:(UIViewController *)viewController {
+	NSArray *interactions = [[ATEngagementBackend sharedBackend] interactionsForCodePoint:@"app.launch"];
+	for (ATInteraction *interaction in interactions) {
+		if ([interaction.type isEqualToString:@"UpgradeMessage"]) {
+			[[ATEngagementBackend sharedBackend] presentUpgradeMessageInteraction:interaction fromViewController:viewController];
+			break;
+		}
+	}
+}
+
+- (void)resetUpgradeData {
+	[[ATEngagementBackend sharedBackend] resetUpgradeVersionInfo];
 }
 
 - (void)dismissMessageCenterAnimated:(BOOL)animated completion:(void (^)(void))completion {
@@ -256,6 +356,7 @@ NSString *const ATInitialUserEmailAddressKey = @"ATInitialUserEmailAddressKey";
 	return bundle;
 #endif
 }
+
 @end
 
 NSString *ATLocalizedString(NSString *key, NSString *comment) {

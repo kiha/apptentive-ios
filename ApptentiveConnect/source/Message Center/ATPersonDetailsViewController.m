@@ -43,6 +43,8 @@ enum kPersonDetailsTableSections {
 
 - (void)dealloc {
 	[[NSNotificationCenter defaultCenter] removeObserver:self];
+	_tableView.delegate = nil;
+	_tableView.dataSource = nil;
 	[_tableView release];
 	[_logoButton release];
 	[_emailCell release];
@@ -51,6 +53,7 @@ enum kPersonDetailsTableSections {
 	[_nameTextField release];
 	[_poweredByLabel release];
 	[_logoImage release];
+	emailRequiredAlert.delegate = nil;
 	[emailRequiredAlert release], emailRequiredAlert = nil;
 	[super dealloc];
 }
@@ -58,6 +61,8 @@ enum kPersonDetailsTableSections {
 - (void)viewDidUnload {
 	self.nameTextField.delegate = nil;
 	self.emailTextField.delegate = nil;
+	self.tableView.delegate = nil;
+	self.tableView.dataSource = nil;
 	[self setTableView:nil];
 	[self setLogoButton:nil];
 	[self setEmailCell:nil];
@@ -72,13 +77,16 @@ enum kPersonDetailsTableSections {
 
 - (void)viewDidLoad {
     [super viewDidLoad];
+	if ([self.tableView respondsToSelector:@selector(setAccessibilityIdentifier:)]) {
+		[self.tableView setAccessibilityIdentifier:@"ATContactInfoTable"];
+	}
 	if ([self respondsToSelector:@selector(edgesForExtendedLayout)]) {
 		self.edgesForExtendedLayout = UIRectEdgeNone;
 	}
 	
 	self.nameTextField.placeholder = ATLocalizedString(@"Name", @"Placeholder text for `Name` field when editing user details.");
 	if ([[ATConnect sharedConnection] emailRequired]) {
-		self.emailTextField.placeholder = ATLocalizedString(@"Email (required)", @"Placeholder text for *required* `Email` field when editing user details.");
+		self.emailTextField.placeholder = ATLocalizedString(@"Email (required)", @"Email Address Field Placeholder (email is required)");
 	} else {
 		self.emailTextField.placeholder = ATLocalizedString(@"Email", @"Placeholder text for `Email` field when editing user details.");
 	}
@@ -89,7 +97,6 @@ enum kPersonDetailsTableSections {
 		self.emailTextField.text = person.emailAddress;
 	}
 	self.navigationItem.title = ATLocalizedString(@"Contact Settings", @"Title of contact information edit screen");
-	self.navigationItem.rightBarButtonItem = [[[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemDone target:self action:@selector(donePressed:)] autorelease];
 	self.tableView.contentInset = UIEdgeInsetsMake(0, 0, self.logoButton.bounds.size.height, 0);
 	self.tableView.scrollIndicatorInsets = self.tableView.contentInset;
 	previousScrollInsets = self.tableView.contentInset;
@@ -112,9 +119,9 @@ enum kPersonDetailsTableSections {
 	emailValidationLabel.font = [UIFont systemFontOfSize:15];
 	emailValidationLabel.shadowColor = [UIColor whiteColor];
 	emailValidationLabel.shadowOffset = CGSizeMake(0, 1);
-	emailValidationLabel.textAlignment = UITextAlignmentCenter;
+	emailValidationLabel.textAlignment = NSTextAlignmentCenter;
 	emailValidationLabel.numberOfLines = 0;
-	emailValidationLabel.lineBreakMode = UILineBreakModeWordWrap;
+	emailValidationLabel.lineBreakMode = NSLineBreakByWordWrapping;
 	emailValidationLabel.backgroundColor = [UIColor clearColor];
 	emailValidationLabel.autoresizingMask = UIViewAutoresizingFlexibleWidth;
 	
@@ -162,9 +169,19 @@ enum kPersonDetailsTableSections {
 	NSString *emailAddress = self.emailTextField.text;
 	NSString *name = self.nameTextField.text;
 	if (emailAddress && ![emailAddress isEqualToString:person.emailAddress]) {
-		person.emailAddress = emailAddress;
-		person.needsUpdate = YES;
+		// Do not save empty string as person's email address
+		if (emailAddress.length > 0) {
+			person.emailAddress = emailAddress;
+			person.needsUpdate = YES;
+		}
+		
+		// Deleted email address from form, then submitted.
+		if ([emailAddress isEqualToString:@""] && person.emailAddress) {
+			person.emailAddress = @"";
+			person.needsUpdate = YES;
+		}
 	}
+	
 	if (name && ![name isEqualToString:person.name]) {
 		person.name = name;
 		person.needsUpdate = YES;
@@ -181,15 +198,19 @@ enum kPersonDetailsTableSections {
 	return YES;
 }
 
+- (void)showEmailRequiredAlert {
+	if (emailRequiredAlert) {
+		return;
+	}
+	NSString *title = ATLocalizedString(@"Please enter an email address", @"Email is required and no email was entered alert title.");
+	NSString *message = ATLocalizedString(@"An email address is required for us to respond.", @"Email is required and no email was entered alert message.");
+	emailRequiredAlert = [[UIAlertView alloc] initWithTitle:title message:message delegate:self cancelButtonTitle:nil otherButtonTitles:ATLocalizedString(@"OK", @"OK button title"), nil];
+	[emailRequiredAlert show];
+}
+
 - (IBAction)donePressed:(id)sender {
 	if ([[ATConnect sharedConnection] emailRequired] && self.emailTextField.text.length == 0) {
-		if (emailRequiredAlert) {
-			[emailRequiredAlert release], emailRequiredAlert = nil;
-		}
-		NSString *title = ATLocalizedString(@"Please enter an email address", @"Email is required and no email was entered alert title.");
-		NSString *message = ATLocalizedString(@"An email address is required for us to respond.", @"Email is required and no email was entered alert message.");
-		emailRequiredAlert = [[UIAlertView alloc] initWithTitle:title message:message delegate:self cancelButtonTitle:nil otherButtonTitles:ATLocalizedString(@"OK", @"OK button title"), nil];
-		[emailRequiredAlert show];
+		[self showEmailRequiredAlert];
 	} else if ([self savePersonData]) {
 		[self.navigationController popViewControllerAnimated:YES];
 	}
@@ -197,11 +218,8 @@ enum kPersonDetailsTableSections {
 
 - (IBAction)logoPressed:(id)sender {
 	ATInfoViewController *vc = [[ATInfoViewController alloc] init];
-	UINavigationController *nc = [[UINavigationController alloc] initWithRootViewController:vc];
-	nc.modalPresentationStyle = UIModalPresentationFormSheet;
-	[self.navigationController presentModalViewController:nc animated:YES];
+	[self.navigationController pushViewController:vc animated:YES];
 	[vc release], vc = nil;
-	[nc release], nc = nil;
 }
 
 - (BOOL)disablesAutomaticKeyboardDismissal {
@@ -247,7 +265,7 @@ enum kPersonDetailsTableSections {
 		if (cell == nil) {
 			cell = [[[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:ATForgetInfoCellIdentifier] autorelease];
 			cell.accessoryView = nil;
-			cell.textLabel.textAlignment = UITextAlignmentCenter;
+			cell.textLabel.textAlignment = NSTextAlignmentCenter;
 		}
 		cell.textLabel.textColor = [UIColor blackColor];
 		cell.textLabel.text = ATLocalizedString(@"Forget Info", @"Title of button to forget contact information");
@@ -265,6 +283,9 @@ enum kPersonDetailsTableSections {
 	if (indexPath.section == kForgetInfoSection) {
 		self.emailTextField.text = @"";
 		self.nameTextField.text = @"";
+		if ([[ATConnect sharedConnection] emailRequired] && self.emailTextField.text.length == 0) {
+			[self showEmailRequiredAlert];
+		}
 	}
 	[tableView deselectRowAtIndexPath:indexPath animated:YES];
 }
@@ -291,6 +312,10 @@ enum kPersonDetailsTableSections {
 
 - (void)textFieldChanged:(id)sender {
 	emailValidationLabel.hidden = [self emailIsValid];
+	
+	if ([[ATConnect sharedConnection] emailRequired] && self.emailTextField.text.length == 0) {
+		[self showEmailRequiredAlert];
+	}
 }
 
 #pragma mark Keyboard Handling
@@ -354,6 +379,7 @@ enum kPersonDetailsTableSections {
 
 - (void)alertView:(UIAlertView *)alertView clickedButtonAtIndex:(NSInteger)buttonIndex {
 	if (emailRequiredAlert && [alertView isEqual:emailRequiredAlert]) {
+		emailRequiredAlert.delegate = nil;
 		[emailRequiredAlert release], emailRequiredAlert = nil;
 		[self.emailTextField becomeFirstResponder];
 	}
@@ -361,6 +387,7 @@ enum kPersonDetailsTableSections {
 
 - (void)alertViewCancel:(UIAlertView *)alertView {
 	if (emailRequiredAlert && [alertView isEqual:emailRequiredAlert]) {
+		emailRequiredAlert.delegate = nil;
 		[emailRequiredAlert release], emailRequiredAlert = nil;
 	}
 }

@@ -37,8 +37,10 @@ extern NSString *const ATAppRatingFlowUserAgreedToRateAppNotification;
 	
 	NSDate *lastUseOfApp;
 }
-/*! Set to a custom app name if you'd like to use something other than the bundle display name. 
- Deprecated in 1.0.1 in favor of server-based configuration of the app display name. */
+/*! 
+ Set to a custom app name if you'd like to use something other than the bundle display name.
+ Deprecated in 1.0.1 in favor of server-based configuration of the app display name. 
+ */
 @property (nonatomic, copy) NSString *appName DEPRECATED_ATTRIBUTE;
 
 @property (nonatomic, copy) NSString *appID;
@@ -49,8 +51,11 @@ extern NSString *const ATAppRatingFlowUserAgreedToRateAppNotification;
 + (ATAppRatingFlow *)sharedRatingFlowWithAppID:(NSString *)iTunesAppID;
 
 #if TARGET_OS_IPHONE
-/*! Will show the ratings flow from the given viewController if the conditions to do so are met. */
-- (void)showRatingFlowFromViewControllerIfConditionsAreMet:(UIViewController *)viewController;
+/*!
+ Will show the ratings flow from the given viewController if the conditions to do so are met.
+ Returns BOOL indicating if the ratings flow was shown or not.
+ */
+- (BOOL)showRatingFlowFromViewControllerIfConditionsAreMet:(UIViewController *)viewController;
 
 #elif TARGET_OS_MAC
 - (void)showRatingFlowIfConditionsAreMet;
@@ -69,4 +74,15 @@ extern NSString *const ATAppRatingFlowUserAgreedToRateAppNotification;
  after each level.
  */
 - (void)logSignificantEvent;
+
+/*!
+ Call to open your app's page on the App Store or Mac App Store.
+ This method can be used to power, for example, a "Rate this app" button in your settings screen.
+ It opens the app store directly, without the normal Apptentive Ratings Flow.
+ If the app store is manually opened, the Rating Flow will not prompt again for this version.
+ Depending on the iOS version, the App Store will either be opened via the App Store app or as
+ a Store Kit view inside your app.
+ */
+- (void)openAppStore;
+
 @end

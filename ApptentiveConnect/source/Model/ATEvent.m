@@ -32,7 +32,8 @@
 
 - (NSDictionary *)apiJSON {
 	NSDictionary *parentJSON = [super apiJSON];
-	NSMutableDictionary *result = [NSMutableDictionary dictionary];
+	NSMutableDictionary *result = [[[NSMutableDictionary alloc] init] autorelease];
+
 	if (parentJSON) {
 		[result addEntriesFromDictionary:parentJSON];
 	}
@@ -47,7 +48,22 @@
 	if (self.pendingEventID != nil) {
 		result[@"nonce"] = self.pendingEventID;
 	}
-	return @{@"event":result};
+	
+	// Monitor that the Event payload has not been dropped on retry
+	if (!result) {
+		ATLogError(@"Event json should not be nil.");
+	}
+	if (result.count == 0) {
+		ATLogError(@"Event json should return a result.");
+	}
+	if (!result[@"label"]) {
+		ATLogError(@"Event json should include a `label`.");
+	}
+	if (!result[@"nonce"]) {
+		ATLogError(@"Event json should include a `nonce`.");
+	}
+		
+	return @{@"event": result};
 }
 
 - (void)setup {
@@ -65,18 +81,6 @@
 	}
 }
 
-- (void)setValue:(id)value forKey:(NSString *)key {
-	NSDictionary *dictionary = [self dictionaryForCurrentData];
-	NSMutableDictionary *mutableDictionary = nil;
-	if (dictionary == nil) {
-		mutableDictionary = [NSMutableDictionary dictionary];
-	} else {
-		mutableDictionary = [[dictionary mutableCopy] autorelease];
-	}
-	[mutableDictionary setValue:value forKey:key];
-	[self setDictionaryData:[self dataForDictionary:mutableDictionary]];
-}
-
 - (void)addEntriesFromDictionary:(NSDictionary *)incomingDictionary {
 	NSDictionary *dictionary = [self dictionaryForCurrentData];
 	NSMutableDictionary *mutableDictionary = nil;
@@ -85,7 +89,7 @@
 	} else {
 		mutableDictionary = [[dictionary mutableCopy] autorelease];
 	}
-	if (dictionary != nil) {
+	if (incomingDictionary != nil) {
 		[mutableDictionary addEntriesFromDictionary:incomingDictionary];
 	}
 	[self setDictionaryData:[self dataForDictionary:mutableDictionary]];

@@ -33,10 +33,11 @@ enum {
 };
 
 @interface ATMessagePanelViewController ()
-- (void)dismissAnimated:(BOOL)animated completion:(void (^)(void))completion withAction:(ATMessagePanelDismissAction)action;
+
 @end
 
 @interface ATMessagePanelViewController (Private)
+- (void)setupContainerView;
 - (void)setupScrollView;
 - (void)teardown;
 - (BOOL)shouldReturn:(UIView *)view;
@@ -67,8 +68,10 @@ enum {
 @synthesize sendButton;
 @synthesize toolbar;
 @synthesize scrollView;
+@synthesize containerView;
 @synthesize emailField;
 @synthesize feedbackView;
+@synthesize promptContainer;
 @synthesize promptTitle;
 @synthesize promptText;
 @synthesize customPlaceholderText;
@@ -87,8 +90,11 @@ enum {
 
 - (void)dealloc {
 	[_toolbarShadowImage release], _toolbarShadowImage = nil;
+	noEmailAddressAlert.delegate = nil;
 	[noEmailAddressAlert release], noEmailAddressAlert = nil;
+	invalidEmailAddressAlert.delegate = nil;
 	[invalidEmailAddressAlert release], invalidEmailAddressAlert = nil;
+	emailRequiredAlert.delegate = nil;
 	[emailRequiredAlert release], emailRequiredAlert = nil;
 	delegate = nil;
 	[super dealloc];
@@ -134,7 +140,6 @@ enum {
 	animationBounds = parentWindow.bounds;
 	animationCenter = parentWindow.center;
 	
-	
 	// Animate in from above.
 	self.window.bounds = animationBounds;
 	self.window.windowLevel = UIWindowLevelNormal;
@@ -156,10 +161,12 @@ enum {
 	}
 	
 	self.window.center = CGPointMake(CGRectGetMidX(endingFrame), CGRectGetMidY(endingFrame));
-	self.view.center = [self offscreenPositionOfView];
+	self.containerView.center = [self offscreenPositionOfView];
 	
 	CGRect newFrame = [self onscreenRectOfView];
 	CGPoint newViewCenter = CGPointMake(CGRectGetMidX(newFrame), CGRectGetMidY(newFrame));
+	
+	[self setupContainerView];
 	
 	UIView *shadowView = nil;
 	if ([ATUtilities osVersionGreaterThanOrEqualTo:@"7"]) {
@@ -175,7 +182,7 @@ enum {
 		shadowFrame.origin.y -= offset;
 		shadowFrame.size.height += offset;
 		shadowView = [[UIView alloc] initWithFrame:shadowFrame];
-		shadowView.backgroundColor = [UIColor colorWithRed:0 green:0 blue:0 alpha:0.5];
+		shadowView.backgroundColor = [UIColor colorWithRed:0 green:0 blue:0 alpha:0.4];
 		shadowView.autoresizingMask = UIViewAutoresizingFlexibleHeight | UIViewAutoresizingFlexibleWidth;
 	} else {
 		shadowView = [[ATShadowView alloc] initWithFrame:self.window.bounds];
@@ -185,7 +192,7 @@ enum {
 	[self.window sendSubviewToBack:shadowView];
 	shadowView.alpha = 1.0;
 	
-	l.cornerRadius = 10.0;
+	self.containerView.layer.cornerRadius = 10.0;
 	l.backgroundColor = [UIColor whiteColor].CGColor;
 	
 	l.masksToBounds = YES;
@@ -193,15 +200,18 @@ enum {
 	if ([ATUtilities osVersionGreaterThanOrEqualTo:@"7"]) {
 		[[UIApplication sharedApplication] setStatusBarStyle:UIStatusBarStyleDefault];
 	} else {
+#		pragma clang diagnostic push
+#		pragma clang diagnostic ignored "-Wdeprecated-declarations"
 		if ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPhone) {
 			[[UIApplication sharedApplication] setStatusBarStyle:UIStatusBarStyleBlackTranslucent];
 		} else {
 			[[UIApplication sharedApplication] setStatusBarStyle:UIStatusBarStyleBlackOpaque];
 		}
+#		pragma clang diagnostic pop
 	}
 	
 	[UIView animateWithDuration:0.3 animations:^(void){
-		self.view.center = newViewCenter;
+		self.containerView.center = newViewCenter;
 		shadowView.alpha = 1.0;
 	} completion:^(BOOL finished) {
 		self.window.hidden = NO;
@@ -223,6 +233,9 @@ enum {
 #pragma mark - View lifecycle
 
 - (void)viewDidLoad {
+	if ([[ATConnect sharedConnection] tintColor] && [self.view respondsToSelector:@selector(setTintColor:)]) {
+		[self.window setTintColor:[[ATConnect sharedConnection] tintColor]];
+	}
 	[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(feedbackChanged:) name:UITextViewTextDidChangeNotification object:self.feedbackView];
 	self.cancelButton = [[[ATCustomButton alloc] initWithButtonStyle:ATCustomButtonStyleCancel] autorelease];
 	[self.cancelButton setAction:@selector(cancelPressed:) forTarget:self];
@@ -251,8 +264,15 @@ enum {
 		titleLabel.text = ATLocalizedString(@"Give Feedback", @"Title of feedback screen.");
 	}
 	titleLabel.adjustsFontSizeToFitWidth = YES;
-	titleLabel.minimumFontSize = 10;
-	titleLabel.textAlignment = UITextAlignmentCenter;
+	if ([titleLabel respondsToSelector:@selector(setMinimumScaleFactor:)]) {
+		titleLabel.minimumScaleFactor = 0.5;
+	} else {
+#		pragma clang diagnostic push
+#		pragma clang diagnostic ignored "-Wdeprecated-declarations"
+		titleLabel.minimumFontSize = 10;
+#		pragma clang diagnostic pop
+	}
+	titleLabel.textAlignment = NSTextAlignmentCenter;
 	titleLabel.textColor = [UIColor colorWithRed:105/256. green:105/256. blue:105/256. alpha:1.0];
 	titleLabel.shadowColor = [UIColor whiteColor];
 	titleLabel.shadowOffset = CGSizeMake(0.0, 1.0);
@@ -296,11 +316,13 @@ enum {
 	
 	if (self.showEmailAddressField && [[ATConnect sharedConnection] emailRequired] && self.emailField.text.length == 0) {
 		if (emailRequiredAlert) {
+			emailRequiredAlert.delegate = nil;
 			[emailRequiredAlert release], emailRequiredAlert = nil;
 		}
 		self.window.windowLevel = UIWindowLevelNormal;
 		self.window.userInteractionEnabled = NO;
 		self.window.layer.shouldRasterize = YES;
+		self.window.layer.rasterizationScale = [[UIScreen mainScreen] scale];
 		NSString *title = ATLocalizedString(@"Please enter an email address", @"Email is required and no email was entered alert title.");
 		NSString *message = ATLocalizedString(@"An email address is required for us to respond.", @"Email is required and no email was entered alert message.");
 		
@@ -313,6 +335,7 @@ enum {
 		self.window.windowLevel = UIWindowLevelNormal;
 		self.window.userInteractionEnabled = NO;
 		self.window.layer.shouldRasterize = YES;
+		self.window.layer.rasterizationScale = [[UIScreen mainScreen] scale];
 		NSString *title = ATLocalizedString(@"Invalid Email Address", @"Invalid email dialog title.");
 		NSString *message = nil;
 		if ([[ATConnect sharedConnection] emailRequired]) {
@@ -324,11 +347,13 @@ enum {
 		[invalidEmailAddressAlert show];
 	} else if (self.showEmailAddressField && (!self.emailField.text || [self.emailField.text length] == 0)) {
 		if (noEmailAddressAlert) {
+			noEmailAddressAlert.delegate = nil;
 			[noEmailAddressAlert release], noEmailAddressAlert = nil;
 		}
 		self.window.windowLevel = UIWindowLevelNormal;
 		self.window.userInteractionEnabled = NO;
 		self.window.layer.shouldRasterize = YES;
+		self.window.layer.rasterizationScale = [[UIScreen mainScreen] scale];
 		NSString *title = ATLocalizedString(@"No email address?", @"Lack of email dialog title.");
 		NSString *message = ATLocalizedString(@"An email address will help us respond.", @"Lack of email dialog message.");
 		noEmailAddressAlert = [[UIAlertView alloc] initWithTitle:title message:message delegate:self cancelButtonTitle:nil otherButtonTitles:ATLocalizedString(@"Send Feedback", @"Send button title"), nil];
@@ -389,7 +414,7 @@ enum {
 		duration = 0.3;
 	}
 	[UIView animateWithDuration:duration animations:^(void){
-		self.view.center = endingPoint;
+		self.containerView.center = endingPoint;
 		gradientView.alpha = 0.0;
 	} completion:^(BOOL finished) {
 		[self.emailField resignFirstResponder];
@@ -486,6 +511,7 @@ enum {
 #pragma mark UIAlertViewDelegate
 - (void)alertView:(UIAlertView *)alertView clickedButtonAtIndex:(NSInteger)buttonIndex {
 	self.window.layer.shouldRasterize = NO;
+	self.window.layer.rasterizationScale = [[UIScreen mainScreen] scale];
 	if (noEmailAddressAlert && [alertView isEqual:noEmailAddressAlert]) {
 		BOOL useNativeTextField = [noEmailAddressAlert respondsToSelector:@selector(alertViewStyle)];
 		
@@ -503,10 +529,12 @@ enum {
 		[self sendMessageAndDismiss];
 	} else if (invalidEmailAddressAlert && [alertView isEqual:invalidEmailAddressAlert]) {
 		self.window.userInteractionEnabled = YES;
+		invalidEmailAddressAlert.delegate = nil;
 		[invalidEmailAddressAlert release], invalidEmailAddressAlert = nil;
 		[self.emailField becomeFirstResponder];
 	} else if (emailRequiredAlert && [alertView isEqual:emailRequiredAlert]) {
 		self.window.userInteractionEnabled = YES;
+		emailRequiredAlert.delegate = nil;
 		[emailRequiredAlert release], emailRequiredAlert = nil;
 		[self.emailField becomeFirstResponder];
 	}
@@ -514,6 +542,7 @@ enum {
 
 - (void)alertViewCancel:(UIAlertView *)alertView {
 	self.window.layer.shouldRasterize = NO;
+	self.window.layer.rasterizationScale = [[UIScreen mainScreen] scale];
 	self.window.userInteractionEnabled = YES;
 	if (noEmailAddressAlert && [alertView isEqual:noEmailAddressAlert]) {
 		[noEmailAddressAlert release], noEmailAddressAlert = nil;
@@ -533,6 +562,11 @@ enum {
 @end
 
 @implementation ATMessagePanelViewController (Private)
+
+- (void)setupContainerView {
+
+}
+
 - (void)setupScrollView {
 	CGFloat offsetY = 0;
 	CGFloat horizontalPadding = 7;
@@ -547,21 +581,22 @@ enum {
 		promptLabel.textColor = [UIColor colorWithRed:128/255. green:128/255. blue:128/255. alpha:1];
 		promptLabel.font = [UIFont fontWithName:@"Helvetica Neue" size:18];
 		promptLabel.autoresizingMask = UIViewAutoresizingFlexibleWidth;
-		promptLabel.lineBreakMode = UILineBreakModeWordWrap;
+		promptLabel.lineBreakMode = NSLineBreakByWordWrapping;
 		promptLabel.numberOfLines = 0;
 		CGSize fitSize = [promptLabel sizeThatFits:CGSizeMake(containerFrame.size.width - labelPadding*2, CGFLOAT_MAX)];
 		containerFrame.size.height = fitSize.height + labelPadding*2;
 		
-		UIView *promptContainer = [[UIView alloc] initWithFrame:containerFrame];
-		promptContainer.autoresizingMask = UIViewAutoresizingFlexibleWidth;
-		promptContainer.backgroundColor = [UIColor whiteColor];
+		UIView *promptView = [[UIView alloc] initWithFrame:containerFrame];
+		promptView.autoresizingMask = UIViewAutoresizingFlexibleWidth;
+		promptView.backgroundColor = [UIColor whiteColor];
+				
 		CGRect labelFrame = CGRectInset(containerFrame, labelPadding, labelPadding);
 		promptLabel.frame = labelFrame;
-		[promptContainer addSubview:promptLabel];
+		[promptView addSubview:promptLabel];
 		
-		[self.scrollView addSubview:promptContainer];
-		offsetY += promptContainer.bounds.size.height;
-		[promptContainer release], promptContainer = nil;
+		[self.scrollView addSubview:promptView];
+		offsetY += promptView.bounds.size.height;
+		[promptView release], promptView = nil;
 		[promptLabel release], promptLabel = nil;
 	}
 	
@@ -587,7 +622,16 @@ enum {
 		emailFrame.origin.x = horizontalPadding + extraHorzontalPadding;
 		emailFrame.origin.y = offsetY;
 		UIFont *emailFont = [UIFont systemFontOfSize:17];
-		CGSize sizedEmail = [@"XXYyI|" sizeWithFont:emailFont];
+		CGSize sizedEmail = CGSizeZero;
+		NSString *sizingString = @"XXYyI|";
+		if ([sizingString respondsToSelector:@selector(sizeWithAttributes:)]) {
+			sizedEmail = [sizingString sizeWithAttributes:@{NSFontAttributeName:emailFont}];
+		} else {
+#			pragma clang diagnostic push
+#			pragma clang diagnostic ignored "-Wdeprecated-declarations"
+			sizedEmail = [sizingString sizeWithFont:emailFont];
+#			pragma clang diagnostic pop
+		}
 		emailFrame.size.height = sizedEmail.height;
 		emailFrame.size.width = emailFrame.size.width - (horizontalPadding + extraHorzontalPadding)*2;
 		self.emailField = [[[UITextField alloc] initWithFrame:emailFrame] autorelease];
@@ -694,12 +738,15 @@ enum {
 	[[NSNotificationCenter defaultCenter] removeObserver:self];
 	[self.window removeFromSuperview];
 	self.window = nil;
-		
+	
 	self.cancelButton = nil;
 	self.sendButton = nil;
 	self.toolbar = nil;
+	self.scrollView.delegate = nil;
 	self.scrollView = nil;
+	self.emailField.delegate = nil;
 	self.emailField = nil;
+	self.feedbackView.delegate = nil;
 	self.feedbackView = nil;
 	self.customPlaceholderText = nil;
 	[originalPresentingWindow makeKeyWindow];
@@ -849,7 +896,7 @@ enum {
 	NSString *trimmedText = [self.feedbackView.text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
 	BOOL empty = [trimmedText length] == 0;
 	self.sendButton.enabled = !empty;
-	self.sendButton.style = empty == YES ? UIBarButtonItemStyleBordered : UIBarButtonItemStyleDone;
+	self.sendButton.style = empty ? UIBarButtonItemStyleBordered : UIBarButtonItemStyleDone;
 }
 @end
 
@@ -915,7 +962,7 @@ enum {
 		}
 	}
 	
-	CGRect f = self.view.frame;
+	CGRect f = self.containerView.frame;
 	f.origin.y = originY;
 	f.origin.x = originX;
 	f.size.width = viewWidth;
@@ -968,12 +1015,12 @@ enum {
 	[self.toolbar sizeToFit];
 	
 	CGRect toolbarBounds = self.toolbar.bounds;
-	UIView *containerView = [self.view viewWithTag:kMessagePanelContainerViewTag];
-	if (containerView != nil) {
-		CGRect containerFrame = containerView.frame;
+	UIView *container = [self.view viewWithTag:kMessagePanelContainerViewTag];
+	if (container != nil) {
+		CGRect containerFrame = container.frame;
 		containerFrame.origin.y = toolbarBounds.size.height;
 		containerFrame.size.height = self.view.bounds.size.height - toolbarBounds.size.height;
-		containerView.frame = containerFrame;
+		container.frame = containerFrame;
 	}
 	CGRect toolbarShadowImageFrame = self.toolbarShadowImage.frame;
 	toolbarShadowImageFrame.origin.y = toolbarBounds.size.height;
@@ -982,8 +1029,10 @@ enum {
 	self.window.transform = CGAffineTransformMakeRotation(angle);
 	self.window.frame = newFrame;
 	CGRect onscreenRect = [self onscreenRectOfView];
-	self.view.frame = onscreenRect;
+	self.containerView.frame = onscreenRect;
 	
 	[self textViewDidChange:self.feedbackView];
+	
+	[self setupContainerView];
 }
 @end

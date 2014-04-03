@@ -20,6 +20,17 @@ enum kRootTableSections {
 	kSectionCount
 };
 
+enum kMessageCenterRows {
+	kMessageCenterRowShowMessageCenter,
+	kMessageCenterRowCount
+};
+
+enum kSurveyRows {
+	kSurveyRowShowSurvey,
+	kSurveyRowShowSurveyWithTags,
+	kSurveyRowCount
+};
+
 @interface RootViewController ()
 - (void)surveyBecameAvailable:(NSNotification *)notification;
 - (void)unreadMessageCountChanged:(NSNotification *)notification;
@@ -46,18 +57,20 @@ enum kRootTableSections {
 	self.tableView.tableHeaderView = imageView;
 	[imageView release], imageView = nil;
 	[super viewDidLoad];
-    
-    tags = [[NSSet alloc] initWithObjects:@"testsurvey", @"testtag", nil];
+	
+	tags = [[NSSet alloc] initWithObjects:@"demoTag", nil];
 	
 	[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(surveyBecameAvailable:) name:ATSurveyNewSurveyAvailableNotification object:nil];
 	[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(unreadMessageCountChanged:) name:ATMessageCenterUnreadCountChangedNotification object:nil];
 }
 
 - (void)surveyBecameAvailable:(NSNotification *)notification {
+	NSLog(@"Apptentive Notification: survey became available");
 	[self.tableView reloadData];
 }
 
 - (void)unreadMessageCountChanged:(NSNotification *)notification {
+	NSLog(@"Apptentive Notification: unread message count changed");
 	[self.tableView reloadData];
 }
 
@@ -68,7 +81,7 @@ enum kRootTableSections {
 		return;
 	}
 	checkedAlready = YES;
-	if ([kApptentiveAPIKey isEqualToString:@"<your key here>"]) {
+	if ([kApptentiveAPIKey isEqualToString:@"ApptentiveApiKey"]) {
 		UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"Please Set API Key" message:@"This demo app will not work properly until you set your API key in defines.h" delegate:nil cancelButtonTitle:@"OK" otherButtonTitles: nil];
 		[alert show];
 		[alert autorelease];
@@ -107,16 +120,16 @@ enum kRootTableSections {
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
 	if (section == kSurveySection) {
-        return 2;
-    } else if (section == kMessageCenterSection) {
-		return 1;
+		return kSurveyRowCount;
+	} else if (section == kMessageCenterSection) {
+		return kMessageCenterRowCount;
 	}
 	return 1;
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
 	static NSString *CellIdentifier = @"Cell";
-    static NSString *SurveyTagsCell = @"SurveyTagsCell";
+	static NSString *SurveyTagsCell = @"SurveyTagsCell";
 	
 	UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:CellIdentifier];
 	if (cell == nil) {
@@ -127,37 +140,37 @@ enum kRootTableSections {
 	if (indexPath.section == kRatingSection) {
 		cell.textLabel.text = @"Start Rating Flow";
 	} else if (indexPath.section == kSurveySection) {
-        if (indexPath.row == 0) {
-            if ([ATSurveys hasSurveyAvailableWithNoTags]) {
-                cell.textLabel.text = @"Show Survey";
-                cell.textLabel.textColor = [UIColor blackColor];
-            } else {
-                cell.textLabel.text = @"No Survey Available";
-                cell.textLabel.textColor = [UIColor grayColor];
-            }
-        } else if (indexPath.row == 1) {
-            cell = [tableView dequeueReusableCellWithIdentifier:SurveyTagsCell];
-            if (cell == nil) {
-                cell = [[[UITableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:SurveyTagsCell] autorelease];
-            }
-            if ([ATSurveys hasSurveyAvailableWithTags:tags]) {
-                cell.textLabel.text = @"Show Survey With Tags";
-                cell.textLabel.textColor = [UIColor blackColor];
-            } else {
-                cell.textLabel.text = @"No Survey Available With Tags";
-                cell.textLabel.textColor = [UIColor grayColor];
-            }
-            NSArray *tagArray = [tags allObjects];
-            cell.detailTextLabel.text = [NSString stringWithFormat:@"tags: %@", [tagArray componentsJoinedByString:@", "]];
-        }
+		if (indexPath.row == kSurveyRowShowSurvey) {
+			if ([ATSurveys hasSurveyAvailableWithNoTags]) {
+				cell.textLabel.text = @"Show Survey";
+				cell.textLabel.textColor = [UIColor blackColor];
+			} else {
+				cell.textLabel.text = @"No Survey Available";
+				cell.textLabel.textColor = [UIColor grayColor];
+			}
+		} else if (indexPath.row == kSurveyRowShowSurveyWithTags) {
+			cell = [tableView dequeueReusableCellWithIdentifier:SurveyTagsCell];
+			if (cell == nil) {
+				cell = [[[UITableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:SurveyTagsCell] autorelease];
+			}
+			if ([ATSurveys hasSurveyAvailableWithTags:tags]) {
+				cell.textLabel.text = @"Show Survey With Tags";
+				cell.textLabel.textColor = [UIColor blackColor];
+			} else {
+				cell.textLabel.text = @"No Survey Available With Tags";
+				cell.textLabel.textColor = [UIColor grayColor];
+			}
+			NSString *plural = (tags.count == 1) ? @"tag" : @"tags";
+			cell.detailTextLabel.text = [NSString stringWithFormat:@"%@: %@", plural, [[tags allObjects] componentsJoinedByString:@", "]];
+		}
 	} else if (indexPath.section == kMessageCenterSection) {
-		if (indexPath.row == 0) {
+		if (indexPath.row == kMessageCenterRowShowMessageCenter) {
 			cell.textLabel.text = @"Message Center";
 			UILabel *unreadLabel = [[UILabel alloc] initWithFrame:CGRectZero];
-			unreadLabel.text = [NSString stringWithFormat:@"%d", [[ATConnect sharedConnection] unreadMessageCount]];
+			unreadLabel.text = [NSString stringWithFormat:@"%lu", (unsigned long)[[ATConnect sharedConnection] unreadMessageCount]];
 			unreadLabel.backgroundColor = [UIColor grayColor];
 			unreadLabel.textColor = [UIColor whiteColor];
-			unreadLabel.textAlignment = UITextAlignmentCenter;
+			unreadLabel.textAlignment = NSTextAlignmentCenter;
 			unreadLabel.font = [UIFont boldSystemFontOfSize:17];
 			[unreadLabel sizeToFit];
 			
@@ -168,11 +181,12 @@ enum kRootTableSections {
 			}
 			unreadLabel.frame = paddedFrame;
 			unreadLabel.layer.cornerRadius = unreadLabel.frame.size.height / 2;
+			unreadLabel.layer.masksToBounds = YES;
 			
 			cell.accessoryView = [unreadLabel autorelease];
 		}
 	}
-    
+	
 	return cell;
 }
 
@@ -180,20 +194,26 @@ enum kRootTableSections {
 	if (indexPath.section == kRatingSection) {
 		[self showRating:nil];
 	} else if (indexPath.section == kSurveySection) {
-        if (indexPath.row == 0) {
-            if ([ATSurveys hasSurveyAvailableWithNoTags]) {
-                [ATSurveys presentSurveyControllerWithNoTagsFromViewController:self];
-            }
-        } else if (indexPath.row == 1) {
-            if ([ATSurveys hasSurveyAvailableWithTags:tags]) {
-                [ATSurveys presentSurveyControllerWithTags:tags fromViewController:self];
-            }
-        }
+		if (indexPath.row == kSurveyRowShowSurvey) {
+			if ([ATSurveys hasSurveyAvailableWithNoTags]) {
+				[ATSurveys presentSurveyControllerWithNoTagsFromViewController:self];
+			}
+		} else if (indexPath.row == kSurveyRowShowSurveyWithTags) {
+			if ([ATSurveys hasSurveyAvailableWithTags:tags]) {
+				[ATSurveys presentSurveyControllerWithTags:tags fromViewController:self];
+			}
+		}
 	} else if (indexPath.section == kMessageCenterSection) {
-		if (indexPath.row == 0) {
-			[[ATConnect sharedConnection] presentMessageCenterFromViewController:self];
+		if (indexPath.row == kMessageCenterRowShowMessageCenter) {
+			BOOL sendWithCustomData = arc4random_uniform(2);
+			if (sendWithCustomData) {
+				[[ATConnect sharedConnection] presentMessageCenterFromViewController:self withCustomData:@{@"sentViaFeedbackDemo": @YES, @"randomlyChosenToHaveCustomData": @YES}];
+			} else {
+				[[ATConnect sharedConnection] presentMessageCenterFromViewController:self];
+			}
 		}
 	}
+	
 	[tableView deselectRowAtIndexPath:indexPath animated:YES];
 }
 
@@ -226,8 +246,8 @@ enum kRootTableSections {
 }
 
 - (void)dealloc {
-    [[NSNotificationCenter defaultCenter] removeObserver:self];
-    [tags release], tags = nil;
+	[[NSNotificationCenter defaultCenter] removeObserver:self];
+	[tags release], tags = nil;
 	[super dealloc];
 }
 @end

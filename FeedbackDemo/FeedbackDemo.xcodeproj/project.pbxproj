@@ -16,6 +16,7 @@
 		4960E12B1344326B00F6311F /* icon-72x72.png in Resources */ = {isa = PBXBuildFile; fileRef = 4960E1251344326B00F6311F /* icon-72x72.png */; };
 		4960E12C1344326B00F6311F /* icon.png in Resources */ = {isa = PBXBuildFile; fileRef = 4960E1261344326B00F6311F /* icon.png */; };
 		4960E139134432F400F6311F /* iTunesArtwork in Resources */ = {isa = PBXBuildFile; fileRef = 4960E138134432F400F6311F /* iTunesArtwork */; };
+		496ED769185829BF001C14FC /* iOS7-Default568h@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 496ED768185829BF001C14FC /* iOS7-Default568h@2x.png */; };
 		4988FB5616212BE3000A7CB7 /* CoreData.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4988FB5516212BE3000A7CB7 /* CoreData.framework */; };
 		49AA100E138B41A40082887A /* SystemConfiguration.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 49AA100D138B41A40082887A /* SystemConfiguration.framework */; };
 		49AAA17E163373A800B26851 /* StoreKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 49AAA17D163373A800B26851 /* StoreKit.framework */; settings = {ATTRIBUTES = (Weak, ); }; };
@@ -37,7 +38,13 @@
 		49E5A52D17F24C9F00146FDD /* MainWindow.xib in Resources */ = {isa = PBXBuildFile; fileRef = 49E5A52A17F24C9F00146FDD /* MainWindow.xib */; };
 		49E5A52E17F24C9F00146FDD /* RootViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 49E5A52B17F24C9F00146FDD /* RootViewController.xib */; };
 		49E8918B134BF69C00DD098A /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 49E8918A134BF69C00DD098A /* QuartzCore.framework */; };
-		49E891D5134FE40200DD098A /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 49E891D2134FE40200DD098A /* Localizable.strings */; };
+		49EF002F18DA683200661F7C /* AssetsLibrary.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 49EF002E18DA683200661F7C /* AssetsLibrary.framework */; };
+		5825F10618AD592C00315374 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 5825F0F818AD592C00315374 /* Localizable.strings */; };
+		584D26681819B0010090BD1B /* icon-120x120.png in Resources */ = {isa = PBXBuildFile; fileRef = 584D26671819B0010090BD1B /* icon-120x120.png */; };
+		584D266D1819BCA70090BD1B /* icon-76x76.png in Resources */ = {isa = PBXBuildFile; fileRef = 584D266A1819BCA70090BD1B /* icon-76x76.png */; };
+		584D266E1819BCA70090BD1B /* icon-144x144.png in Resources */ = {isa = PBXBuildFile; fileRef = 584D266B1819BCA70090BD1B /* icon-144x144.png */; };
+		584D266F1819BCA70090BD1B /* icon-152x152.png in Resources */ = {isa = PBXBuildFile; fileRef = 584D266C1819BCA70090BD1B /* icon-152x152.png */; };
+		58805F3B18120EBA00210DA5 /* Accelerate.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 58805F3A18120EBA00210DA5 /* Accelerate.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -96,12 +103,8 @@
 		4960E1261344326B00F6311F /* icon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon.png; sourceTree = "<group>"; };
 		4960E138134432F400F6311F /* iTunesArtwork */ = {isa = PBXFileReference; lastKnownFileType = file; path = iTunesArtwork; sourceTree = "<group>"; };
 		4960E13E13455ACE00F6311F /* ATConnect.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ATConnect.h; path = ../ApptentiveConnect/source/ATConnect.h; sourceTree = "<group>"; };
+		496ED768185829BF001C14FC /* iOS7-Default568h@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "iOS7-Default568h@2x.png"; path = "art/iOS7-Default568h@2x.png"; sourceTree = SOURCE_ROOT; };
 		4988FB5516212BE3000A7CB7 /* CoreData.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreData.framework; path = System/Library/Frameworks/CoreData.framework; sourceTree = SDKROOT; };
-		4995EDC917595AF100AF7268 /* ja */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ja; path = ja.lproj/Localizable.strings; sourceTree = "<group>"; };
-		4995EDCA17595AFC00AF7268 /* de */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = de; path = de.lproj/Localizable.strings; sourceTree = "<group>"; };
-		4995EDCB17595B1F00AF7268 /* pt */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = pt; path = pt.lproj/Localizable.strings; sourceTree = "<group>"; };
-		4995EDCC17595B3100AF7268 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/Localizable.strings; sourceTree = "<group>"; };
-		4995EDCD17595B3C00AF7268 /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/Localizable.strings"; sourceTree = "<group>"; };
 		49AA100D138B41A40082887A /* SystemConfiguration.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SystemConfiguration.framework; path = System/Library/Frameworks/SystemConfiguration.framework; sourceTree = SDKROOT; };
 		49AAA17D163373A800B26851 /* StoreKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = StoreKit.framework; path = System/Library/Frameworks/StoreKit.framework; sourceTree = SDKROOT; };
 		49ADE8DD1626169B00DD8634 /* CoreText.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreText.framework; path = System/Library/Frameworks/CoreText.framework; sourceTree = SDKROOT; };
@@ -117,10 +120,10 @@
 		49C002FB1334172F0071F088 /* FeedbackDemoAppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = FeedbackDemoAppDelegate.m; sourceTree = "<group>"; };
 		49C003001334172F0071F088 /* RootViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RootViewController.h; sourceTree = "<group>"; };
 		49C003011334172F0071F088 /* RootViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = RootViewController.m; sourceTree = "<group>"; };
-		49C0030B1334172F0071F088 /* FeedbackDemoTests.octest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FeedbackDemoTests.octest; sourceTree = BUILT_PRODUCTS_DIR; };
+		49C0030B1334172F0071F088 /* FeedbackDemoTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FeedbackDemoTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		49C003131334172F0071F088 /* FeedbackDemoTests-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "FeedbackDemoTests-Info.plist"; sourceTree = "<group>"; };
 		49C003171334172F0071F088 /* FeedbackDemoTests-Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "FeedbackDemoTests-Prefix.pch"; sourceTree = "<group>"; };
-		49C003181334172F0071F088 /* FeedbackDemoTests.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = FeedbackDemoTests.h; sourceTree = "<group>"; };
+		49C003181334172F0071F088 /* FeedbackDemoTests.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; lineEnding = 0; path = FeedbackDemoTests.h; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objcpp; };
 		49C0031A1334172F0071F088 /* FeedbackDemoTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = FeedbackDemoTests.m; sourceTree = "<group>"; };
 		49C00324133417390071F088 /* ApptentiveConnect.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = ApptentiveConnect.xcodeproj; path = ../ApptentiveConnect/ApptentiveConnect.xcodeproj; sourceTree = "<group>"; };
 		49C00332133417790071F088 /* libApptentiveConnect.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; path = libApptentiveConnect.a; sourceTree = SOURCE_ROOT; };
@@ -129,17 +132,29 @@
 		49E5A52A17F24C9F00146FDD /* MainWindow.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = MainWindow.xib; sourceTree = "<group>"; };
 		49E5A52B17F24C9F00146FDD /* RootViewController.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = RootViewController.xib; sourceTree = "<group>"; };
 		49E8918A134BF69C00DD098A /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
-		49E891D4134FE40200DD098A /* es */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = es; path = es.lproj/Localizable.strings; sourceTree = "<group>"; };
-		58ACBF5617E7ACD6008DA925 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
-		58EA5B3317B4778F00ECEB4B /* nl */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = nl; path = nl.lproj/Localizable.strings; sourceTree = "<group>"; };
+		49EF002E18DA683200661F7C /* AssetsLibrary.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AssetsLibrary.framework; path = System/Library/Frameworks/AssetsLibrary.framework; sourceTree = SDKROOT; };
+		5825F0F918AD592C00315374 /* da */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = da; path = da.lproj/Localizable.strings; sourceTree = "<group>"; };
+		5825F0FA18AD592C00315374 /* de */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = de; path = de.lproj/Localizable.strings; sourceTree = "<group>"; };
+		5825F0FB18AD592C00315374 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
+		5825F0FC18AD592C00315374 /* es */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = es; path = es.lproj/Localizable.strings; sourceTree = "<group>"; };
+		5825F0FD18AD592C00315374 /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/Localizable.strings; sourceTree = "<group>"; };
+		5825F0FE18AD592C00315374 /* it */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = it; path = it.lproj/Localizable.strings; sourceTree = "<group>"; };
+		5825F0FF18AD592C00315374 /* ja */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ja; path = ja.lproj/Localizable.strings; sourceTree = "<group>"; };
+		5825F10018AD592C00315374 /* nl */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = nl; path = nl.lproj/Localizable.strings; sourceTree = "<group>"; };
+		5825F10118AD592C00315374 /* pt */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = pt; path = pt.lproj/Localizable.strings; sourceTree = "<group>"; };
+		5825F10218AD592C00315374 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/Localizable.strings; sourceTree = "<group>"; };
+		5825F10318AD592C00315374 /* sv */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = sv; path = sv.lproj/Localizable.strings; sourceTree = "<group>"; };
+		5825F10418AD592C00315374 /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/Localizable.strings"; sourceTree = "<group>"; };
+		5825F10518AD592C00315374 /* zh */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = zh; path = zh.lproj/Localizable.strings; sourceTree = "<group>"; };
+		584D26671819B0010090BD1B /* icon-120x120.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "icon-120x120.png"; sourceTree = "<group>"; };
+		584D266A1819BCA70090BD1B /* icon-76x76.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "icon-76x76.png"; sourceTree = "<group>"; };
+		584D266B1819BCA70090BD1B /* icon-144x144.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "icon-144x144.png"; sourceTree = "<group>"; };
+		584D266C1819BCA70090BD1B /* icon-152x152.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "icon-152x152.png"; sourceTree = "<group>"; };
+		58805F3A18120EBA00210DA5 /* Accelerate.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Accelerate.framework; path = System/Library/Frameworks/Accelerate.framework; sourceTree = SDKROOT; };
 		58EA5B3517B4778F00ECEB4B /* nl */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = nl; path = nl.lproj/InfoPlist.strings; sourceTree = "<group>"; };
-		58EA5B3817B4795A00ECEB4B /* it */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = it; path = it.lproj/Localizable.strings; sourceTree = "<group>"; };
 		58EA5B3A17B4795B00ECEB4B /* it */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = it; path = it.lproj/InfoPlist.strings; sourceTree = "<group>"; };
-		58EA5B3E17B47A4600ECEB4B /* da */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = da; path = da.lproj/Localizable.strings; sourceTree = "<group>"; };
 		58EA5B4017B47A4600ECEB4B /* da */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = da; path = da.lproj/InfoPlist.strings; sourceTree = "<group>"; };
-		58EA5B4417B47B4100ECEB4B /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/Localizable.strings; sourceTree = "<group>"; };
 		58EA5B4617B47B4100ECEB4B /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/InfoPlist.strings; sourceTree = "<group>"; };
-		58EA5B5017B47E0C00ECEB4B /* zh */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = zh; path = zh.lproj/Localizable.strings; sourceTree = "<group>"; };
 		58EA5B5217B47E0C00ECEB4B /* zh */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = zh; path = zh.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -148,6 +163,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				49EF002F18DA683200661F7C /* AssetsLibrary.framework in Frameworks */,
+				58805F3B18120EBA00210DA5 /* Accelerate.framework in Frameworks */,
 				49ADE8DE1626169B00DD8634 /* CoreText.framework in Frameworks */,
 				4988FB5616212BE3000A7CB7 /* CoreData.framework in Frameworks */,
 				49AAA17E163373A800B26851 /* StoreKit.framework in Frameworks */,
@@ -178,6 +195,11 @@
 			isa = PBXGroup;
 			children = (
 				49173D88160176B1002A27CC /* Default-568h@2x.png */,
+				496ED768185829BF001C14FC /* iOS7-Default568h@2x.png */,
+				584D266A1819BCA70090BD1B /* icon-76x76.png */,
+				584D266B1819BCA70090BD1B /* icon-144x144.png */,
+				584D266C1819BCA70090BD1B /* icon-152x152.png */,
+				584D26671819B0010090BD1B /* icon-120x120.png */,
 				4960E1221344326B00F6311F /* icon-114x114.png */,
 				4960E1231344326B00F6311F /* icon-29x29.png */,
 				4960E1241344326B00F6311F /* icon-58x58.png */,
@@ -208,7 +230,7 @@
 			isa = PBXGroup;
 			children = (
 				49C002E71334172E0071F088 /* FeedbackDemo.app */,
-				49C0030B1334172F0071F088 /* FeedbackDemoTests.octest */,
+				49C0030B1334172F0071F088 /* FeedbackDemoTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -216,6 +238,8 @@
 		49C002EA1334172E0071F088 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				49EF002E18DA683200661F7C /* AssetsLibrary.framework */,
+				58805F3A18120EBA00210DA5 /* Accelerate.framework */,
 				49ADE8DD1626169B00DD8634 /* CoreText.framework */,
 				4988FB5516212BE3000A7CB7 /* CoreData.framework */,
 				49AAA17D163373A800B26851 /* StoreKit.framework */,
@@ -249,7 +273,7 @@
 		49C002F21334172F0071F088 /* Supporting Files */ = {
 			isa = PBXGroup;
 			children = (
-				49E891D1134FE40200DD098A /* localization */,
+				5825F0F718AD592C00315374 /* localization */,
 				4960E1211344326B00F6311F /* art */,
 				49C002F31334172F0071F088 /* FeedbackDemo-Info.plist */,
 				49C002F71334172F0071F088 /* FeedbackDemo-Prefix.pch */,
@@ -282,16 +306,16 @@
 			isa = PBXGroup;
 			children = (
 				49C0032D133417390071F088 /* libApptentiveConnect.a */,
-				49C0032F133417390071F088 /* ApptentiveConnectTests.octest */,
+				49C0032F133417390071F088 /* ApptentiveConnectTests.xctest */,
 				49D111A013341A7C00603373 /* ApptentiveResources.bundle */,
 			);
 			name = Products;
 			sourceTree = "<group>";
 		};
-		49E891D1134FE40200DD098A /* localization */ = {
+		5825F0F718AD592C00315374 /* localization */ = {
 			isa = PBXGroup;
 			children = (
-				49E891D2134FE40200DD098A /* Localizable.strings */,
+				5825F0F818AD592C00315374 /* Localizable.strings */,
 			);
 			name = localization;
 			path = resources/localization;
@@ -326,7 +350,6 @@
 				49C003061334172F0071F088 /* Sources */,
 				49C003071334172F0071F088 /* Frameworks */,
 				49C003081334172F0071F088 /* Resources */,
-				49C003091334172F0071F088 /* ShellScript */,
 			);
 			buildRules = (
 			);
@@ -335,8 +358,8 @@
 			);
 			name = FeedbackDemoTests;
 			productName = FeedbackDemoTests;
-			productReference = 49C0030B1334172F0071F088 /* FeedbackDemoTests.octest */;
-			productType = "com.apple.product-type.bundle";
+			productReference = 49C0030B1334172F0071F088 /* FeedbackDemoTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
 		};
 /* End PBXNativeTarget section */
 
@@ -365,6 +388,7 @@
 				da,
 				fr,
 				zh,
+				sv,
 			);
 			mainGroup = 49C002DC1334172E0071F088;
 			productRefGroup = 49C002E81334172E0071F088 /* Products */;
@@ -391,10 +415,10 @@
 			remoteRef = 49C0032C133417390071F088 /* PBXContainerItemProxy */;
 			sourceTree = BUILT_PRODUCTS_DIR;
 		};
-		49C0032F133417390071F088 /* ApptentiveConnectTests.octest */ = {
+		49C0032F133417390071F088 /* ApptentiveConnectTests.xctest */ = {
 			isa = PBXReferenceProxy;
 			fileType = wrapper.cfbundle;
-			path = ApptentiveConnectTests.octest;
+			path = ApptentiveConnectTests.xctest;
 			remoteRef = 49C0032E133417390071F088 /* PBXContainerItemProxy */;
 			sourceTree = BUILT_PRODUCTS_DIR;
 		};
@@ -412,17 +436,22 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				5825F10618AD592C00315374 /* Localizable.strings in Resources */,
 				49E5A52D17F24C9F00146FDD /* MainWindow.xib in Resources */,
 				49E5A52C17F24C9F00146FDD /* MainWindow-iPad.xib in Resources */,
 				49E5A52E17F24C9F00146FDD /* RootViewController.xib in Resources */,
 				493529BD138C712A000E464A /* ApptentiveResources.bundle in Resources */,
+				584D266E1819BCA70090BD1B /* icon-144x144.png in Resources */,
+				584D266F1819BCA70090BD1B /* icon-152x152.png in Resources */,
 				4960E1281344326B00F6311F /* icon-114x114.png in Resources */,
 				4960E1291344326B00F6311F /* icon-29x29.png in Resources */,
+				584D26681819B0010090BD1B /* icon-120x120.png in Resources */,
+				584D266D1819BCA70090BD1B /* icon-76x76.png in Resources */,
 				4960E12A1344326B00F6311F /* icon-58x58.png in Resources */,
+				496ED769185829BF001C14FC /* iOS7-Default568h@2x.png in Resources */,
 				4960E12B1344326B00F6311F /* icon-72x72.png in Resources */,
 				4960E12C1344326B00F6311F /* icon.png in Resources */,
 				4960E139134432F400F6311F /* iTunesArtwork in Resources */,
-				49E891D5134FE40200DD098A /* Localizable.strings in Resources */,
 				49173D89160176B1002A27CC /* Default-568h@2x.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -437,22 +466,6 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
-
-/* Begin PBXShellScriptBuildPhase section */
-		49C003091334172F0071F088 /* ShellScript */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputPaths = (
-			);
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "# Run the unit tests in this test bundle.\n\"${SYSTEM_DEVELOPER_DIR}/Tools/RunUnitTests\"\n";
-		};
-/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		49C002E31334172E0071F088 /* Sources */ = {
@@ -506,21 +519,22 @@
 			name = InfoPlist.strings;
 			sourceTree = "<group>";
 		};
-		49E891D2134FE40200DD098A /* Localizable.strings */ = {
+		5825F0F818AD592C00315374 /* Localizable.strings */ = {
 			isa = PBXVariantGroup;
 			children = (
-				49E891D4134FE40200DD098A /* es */,
-				4995EDC917595AF100AF7268 /* ja */,
-				4995EDCA17595AFC00AF7268 /* de */,
-				4995EDCB17595B1F00AF7268 /* pt */,
-				4995EDCC17595B3100AF7268 /* ru */,
-				4995EDCD17595B3C00AF7268 /* zh-Hans */,
-				58EA5B3317B4778F00ECEB4B /* nl */,
-				58EA5B3817B4795A00ECEB4B /* it */,
-				58EA5B3E17B47A4600ECEB4B /* da */,
-				58EA5B4417B47B4100ECEB4B /* fr */,
-				58EA5B5017B47E0C00ECEB4B /* zh */,
-				58ACBF5617E7ACD6008DA925 /* en */,
+				5825F0F918AD592C00315374 /* da */,
+				5825F0FA18AD592C00315374 /* de */,
+				5825F0FB18AD592C00315374 /* en */,
+				5825F0FC18AD592C00315374 /* es */,
+				5825F0FD18AD592C00315374 /* fr */,
+				5825F0FE18AD592C00315374 /* it */,
+				5825F0FF18AD592C00315374 /* ja */,
+				5825F10018AD592C00315374 /* nl */,
+				5825F10118AD592C00315374 /* pt */,
+				5825F10218AD592C00315374 /* ru */,
+				5825F10318AD592C00315374 /* sv */,
+				5825F10418AD592C00315374 /* zh-Hans */,
+				5825F10518AD592C00315374 /* zh */,
 			);
 			name = Localizable.strings;
 			sourceTree = "<group>";
@@ -541,7 +555,7 @@
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				HEADER_SEARCH_PATHS = "$(BUILT_PRODUCTS_DIR)/usr/local/include";
-				IPHONEOS_DEPLOYMENT_TARGET = 4.3;
+				IPHONEOS_DEPLOYMENT_TARGET = 5.1.1;
 				ONLY_ACTIVE_ARCH = YES;
 				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "";
 				SDKROOT = iphoneos;
@@ -558,7 +572,7 @@
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				HEADER_SEARCH_PATHS = "$(BUILT_PRODUCTS_DIR)/usr/local/include";
-				IPHONEOS_DEPLOYMENT_TARGET = 4.3;
+				IPHONEOS_DEPLOYMENT_TARGET = 5.1.1;
 				OTHER_CFLAGS = "-DNS_BLOCK_ASSERTIONS=1";
 				SDKROOT = iphoneos;
 			};
@@ -581,6 +595,7 @@
 					"$(DSTROOT)/usr/local/include",
 				);
 				INFOPLIST_FILE = "FeedbackDemo/FeedbackDemo-Info.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 5.0;
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"\"$(SRCROOT)\"",
@@ -608,6 +623,7 @@
 					"$(DSTROOT)/usr/local/include",
 				);
 				INFOPLIST_FILE = "FeedbackDemo/FeedbackDemo-Info.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 5.0;
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"\"$(SRCROOT)\"",
@@ -628,20 +644,15 @@
 				BUNDLE_LOADER = "$(BUILT_PRODUCTS_DIR)/FeedbackDemo.app/FeedbackDemo";
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(SDKROOT)/Developer/Library/Frameworks",
-					"$(DEVELOPER_LIBRARY_DIR)/Frameworks",
+					"$(inherited)",
 				);
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "FeedbackDemoTests/FeedbackDemoTests-Prefix.pch";
 				GCC_THUMB_SUPPORT = NO;
 				GCC_VERSION = com.apple.compilers.llvm.clang.1_0;
 				INFOPLIST_FILE = "FeedbackDemoTests/FeedbackDemoTests-Info.plist";
-				OTHER_LDFLAGS = (
-					"-framework",
-					SenTestingKit,
-				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				TEST_HOST = "$(BUNDLE_LOADER)";
-				WRAPPER_EXTENSION = octest;
 			};
 			name = Debug;
 		};
@@ -652,20 +663,15 @@
 				BUNDLE_LOADER = "$(BUILT_PRODUCTS_DIR)/FeedbackDemo.app/FeedbackDemo";
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(SDKROOT)/Developer/Library/Frameworks",
-					"$(DEVELOPER_LIBRARY_DIR)/Frameworks",
+					"$(inherited)",
 				);
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "FeedbackDemoTests/FeedbackDemoTests-Prefix.pch";
 				GCC_THUMB_SUPPORT = NO;
 				GCC_VERSION = com.apple.compilers.llvm.clang.1_0;
 				INFOPLIST_FILE = "FeedbackDemoTests/FeedbackDemoTests-Info.plist";
-				OTHER_LDFLAGS = (
-					"-framework",
-					SenTestingKit,
-				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				TEST_HOST = "$(BUNDLE_LOADER)";
-				WRAPPER_EXTENSION = octest;
 			};
 			name = Release;
 		};

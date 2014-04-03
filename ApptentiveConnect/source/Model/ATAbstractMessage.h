@@ -32,6 +32,8 @@ typedef enum {
 @property (nonatomic, retain) NSString *errorMessageJSON;
 @property (nonatomic, retain) ATMessageSender *sender;
 @property (nonatomic, retain) NSSet *displayTypes;
+@property (nonatomic, retain) NSData *customData;
+@property (nonatomic, retain) NSNumber *hidden;
 
 + (ATAbstractMessage *)findMessageWithID:(NSString *)apptentiveID;
 + (ATAbstractMessage *)findMessageWithPendingID:(NSString *)pendingID;
@@ -44,5 +46,11 @@ typedef enum {
 - (void)removeDisplayTypesObject:(ATMessageDisplayType *)value;
 - (void)addDisplayTypes:(NSSet *)values;
 - (void)removeDisplayTypes:(NSSet *)values;
+
+- (void)setCustomDataValue:(id)value forKey:(NSString *)key;
+- (void)addCustomDataFromDictionary:(NSDictionary *)dictionary;
+
+- (NSDictionary *)dictionaryForCustomData;
+- (NSData *)dataForDictionary:(NSDictionary *)dictionary;
 
 @end

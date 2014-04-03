@@ -67,7 +67,7 @@ NSString *const ATAPIRequestStatusChanged = @"ATAPIRequestStatusChanged";
 - (void)showAlert {
 	if (self.failed) {
 #if TARGET_OS_IPHONE
-		UIAlertView *alert = [[UIAlertView alloc] initWithTitle:self.errorTitle message:self.errorMessage delegate:self cancelButtonTitle:ATLocalizedString(@"Close", nil) otherButtonTitles:nil];
+		UIAlertView *alert = [[UIAlertView alloc] initWithTitle:self.errorTitle message:self.errorMessage delegate:nil cancelButtonTitle:ATLocalizedString(@"Close", nil) otherButtonTitles:nil];
 		[alert show];
 		[alert release];
 #endif
@@ -87,7 +87,7 @@ NSString *const ATAPIRequestStatusChanged = @"ATAPIRequestStatusChanged";
 	@synchronized(self) {
 		if (cancelled) return;
 	}
-	int statusCode = sender.statusCode;
+	NSInteger statusCode = sender.statusCode;
 	expiresMaxAge = [sender expiresMaxAge];
 	switch (statusCode) {
 		case 200:
@@ -122,6 +122,9 @@ NSString *const ATAPIRequestStatusChanged = @"ATAPIRequestStatusChanged";
 			}
 			ATLogError(@"Connection failed. %@, %@", self.errorTitle, self.errorMessage);
 			ATLogInfo(@"Status was: %d", sender.statusCode);
+			if (sender.statusCode == 401) {
+				ATLogDebug(@"Your Apptentive API key may not be set correctly!");
+			}
 			ATLogDebug(@"Request was: %@", [connection requestAsString]);
 			ATLogDebug(@"Response was: %@", responseString);
 		}

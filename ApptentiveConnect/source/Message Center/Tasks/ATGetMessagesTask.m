@@ -12,6 +12,7 @@
 #import "ATBackend.h"
 #import "ATAbstractMessage.h"
 #import "ATConversationUpdater.h"
+#import "ATMessageSender.h"
 #import "ATTextMessage.h"
 #import "ATWebClient.h"
 #import "ATWebClient+MessageCenter.h"
@@ -101,7 +102,7 @@ static NSString *const ATMessagesLastRetrievedMessageIDPreferenceKey = @"ATMessa
 		if ([result isKindOfClass:[NSDictionary class]] && [self processResult:(NSDictionary *)result]) {
 			self.finished = YES;
 		} else {
-			ATLogError(@"Messages result is not NSDictionary!");
+			ATLogError(@"Could not process the Get Message Task result!");
 			self.failed = YES;
 		}
 		[self stop];
@@ -139,6 +140,8 @@ static NSString *const ATMessagesLastRetrievedMessageIDPreferenceKey = @"ATMessa
 	NSManagedObjectContext *context = [[ATBackend sharedBackend] managedObjectContext];
 	NSString *lastMessageID = nil;
 	
+	ATConversation *conversation = [ATConversationUpdater currentConversation];
+	
 	do { // once
 		if (!jsonMessages) break;
 		if (![jsonMessages at_safeObjectForKey:@"items"]) break;
@@ -166,6 +169,10 @@ static NSString *const ATMessagesLastRetrievedMessageIDPreferenceKey = @"ATMessa
 					//TODO: Add file message type here. Currently server won't return file messages.
 				} else if ([type isEqualToString:@"AutomatedMessage"]) {
 					message = [(ATAutomatedMessage *)[ATAutomatedMessage newInstanceWithJSON:messageJSON] autorelease];
+				}
+				if (conversation && [conversation.personID isEqualToString:message.sender.apptentiveID]) {
+					message.sentByUser = @(YES);
+					message.seenByUser = @(YES);
 				}
 				message.pendingState = @(ATPendingMessageStateConfirmed);
 				if (message) {

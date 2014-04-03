@@ -18,6 +18,7 @@
 #import "ATPersonUpdater.h"
 #if TARGET_OS_IPHONE
 #import "ATMessageCenterViewController.h"
+#import "ATMessageCenterV7ViewController.h"
 #import "ATMessagePanelViewController.h"
 #endif
 
@@ -58,6 +59,7 @@ NSString *const ATBackendBecameReadyNotification;
 @property (nonatomic, copy) NSString *apiKey;
 /*! The feedback currently being worked on by the user. */
 @property (nonatomic, retain) ATFeedback *currentFeedback;
+@property (nonatomic, retain) NSDictionary *currentCustomData;
 @property (nonatomic, retain, readonly) NSPersistentStoreCoordinator *persistentStoreCoordinator;
 @property (nonatomic, retain, readonly) NSManagedObjectContext *managedObjectContext;
 @property (nonatomic, retain, readonly) NSManagedObjectModel *managedObjectModel;
@@ -66,6 +68,8 @@ NSString *const ATBackendBecameReadyNotification;
 #if TARGET_OS_IPHONE
 + (UIImage *)imageNamed:(NSString *)name;
 - (void)presentMessageCenterFromViewController:(UIViewController *)viewController;
+- (void)presentMessageCenterFromViewController:(UIViewController *)viewController withCustomData:(NSDictionary *)customData;
+- (void)attachCustomDataToMessage:(ATAbstractMessage *)message;
 - (void)dismissMessageCenterAnimated:(BOOL)animated completion:(void (^)(void))completion;
 - (void)presentIntroDialogFromViewController:(UIViewController *)viewController;
 - (void)presentIntroDialogFromViewController:(UIViewController *)viewController withTitle:(NSString *)title prompt:(NSString *)prompt placeholderText:(NSString *)placeholder;
@@ -77,8 +81,19 @@ NSString *const ATBackendBecameReadyNotification;
     will be sent in the background. */
 - (void)sendFeedback:(ATFeedback *)feedback;
 
-/*! Use this to send an automated message. */
+/*! Send ATAutomatedMessage messages. */
 - (void)sendAutomatedMessageWithTitle:(NSString *)title body:(NSString *)body;
+
+/*! Send ATTextMessage messages. */
+- (BOOL)sendTextMessageWithBody:(NSString *)body completion:(void (^)(NSString *pendingMessageID))completion;
+- (BOOL)sendTextMessageWithBody:(NSString *)body hiddenOnClient:(BOOL)hidden completion:(void (^)(NSString *pendingMessageID))completion;
+
+/*! Send ATFileMessage messages. */
+- (BOOL)sendImageMessageWithImage:(UIImage *)image fromSource:(ATFeedbackImageSource)imageSource;
+- (BOOL)sendImageMessageWithImage:(UIImage *)image hiddenOnClient:(BOOL)hidden fromSource:(ATFeedbackImageSource)imageSource;
+
+- (BOOL)sendFileMessageWithFileData:(NSData *)fileData andMimeType:(NSString *)mimeType fromSource:(ATFIleAttachmentSource)source;
+- (BOOL)sendFileMessageWithFileData:(NSData *)fileData andMimeType:(NSString *)mimeType hiddenOnClient:(BOOL)hidden fromSource:(ATFIleAttachmentSource)source;
 
 - (NSString *)supportDirectoryPath;
 
@@ -100,4 +115,6 @@ NSString *const ATBackendBecameReadyNotification;
 - (NSString *)appName;
 
 - (BOOL)isReady;
+
+- (NSURLCache *)imageCache;
 @end

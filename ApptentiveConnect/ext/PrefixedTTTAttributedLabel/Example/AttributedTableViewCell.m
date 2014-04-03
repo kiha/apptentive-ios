@@ -22,7 +22,7 @@
 
 #import <QuartzCore/QuartzCore.h>
 #import "AttributedTableViewCell.h"
-#import "TTTAttributedLabel.h"
+#import "PrefixedTTTAttributedLabel.h"
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
@@ -94,16 +94,19 @@ static inline NSRegularExpression * ParenthesisRegularExpression() {
 
 
 - (void)setSummaryText:(NSString *)text {
-    [self willChangeValueForKey:@"summaryText"];
     _summaryText = [text copy];
-    [self didChangeValueForKey:@"summaryText"];
+}
+
+- (void)drawRect:(CGRect)rect
+{
+    [super drawRect:rect];
     
     [self.summaryLabel setText:self.summaryText afterInheritingLabelAttributesAndConfiguringWithBlock:^NSMutableAttributedString *(NSMutableAttributedString *mutableAttributedString) {
         NSRange stringRange = NSMakeRange(0, [mutableAttributedString length]);
         
         NSRegularExpression *regexp = NameRegularExpression();
         NSRange nameRange = [regexp rangeOfFirstMatchInString:[mutableAttributedString string] options:0 range:stringRange];
-        UIFont *boldSystemFont = [UIFont boldSystemFontOfSize:kEspressoDescriptionTextFontSize]; 
+        UIFont *boldSystemFont = [UIFont boldSystemFontOfSize:kEspressoDescriptionTextFontSize];
         CTFontRef boldFont = CTFontCreateWithName((__bridge CFStringRef)boldSystemFont.fontName, boldSystemFont.pointSize, NULL);
         if (boldFont) {
             [mutableAttributedString removeAttribute:(__bridge NSString *)kCTFontAttributeName range:nameRange];
@@ -114,7 +117,7 @@ static inline NSRegularExpression * ParenthesisRegularExpression() {
         [mutableAttributedString replaceCharactersInRange:nameRange withString:[[[mutableAttributedString string] substringWithRange:nameRange] uppercaseString]];
         
         regexp = ParenthesisRegularExpression();
-        [regexp enumerateMatchesInString:[mutableAttributedString string] options:0 range:stringRange usingBlock:^(NSTextCheckingResult *result, NSMatchingFlags flags, BOOL *stop) {            
+        [regexp enumerateMatchesInString:[mutableAttributedString string] options:0 range:stringRange usingBlock:^(NSTextCheckingResult *result, __unused NSMatchingFlags flags, __unused BOOL *stop) {
             UIFont *italicSystemFont = [UIFont italicSystemFontOfSize:kEspressoDescriptionTextFontSize];
             CTFontRef italicFont = CTFontCreateWithName((__bridge CFStringRef)italicSystemFont.fontName, italicSystemFont.pointSize, NULL);
             if (italicFont) {
@@ -126,7 +129,7 @@ static inline NSRegularExpression * ParenthesisRegularExpression() {
                 [mutableAttributedString addAttribute:(NSString *)kCTForegroundColorAttributeName value:(__bridge id)[[UIColor grayColor] CGColor] range:result.range];
             }
         }];
-                
+        
         return mutableAttributedString;
     }];
     
@@ -134,13 +137,22 @@ static inline NSRegularExpression * ParenthesisRegularExpression() {
     NSRange linkRange = [regexp rangeOfFirstMatchInString:self.summaryText options:0 range:NSMakeRange(0, [self.summaryText length])];
     NSURL *url = [NSURL URLWithString:[NSString stringWithFormat:@"http://en.wikipedia.org/wiki/%@", [self.summaryText substringWithRange:linkRange]]];
     [self.summaryLabel addLinkToURL:url withRange:linkRange];
+    
+    [self.summaryLabel setNeedsDisplay];
 }
 
 + (CGFloat)heightForCellWithText:(NSString *)text {
-    CGFloat height = 10.0f;
-    height += ceilf([text sizeWithFont:[UIFont systemFontOfSize:kEspressoDescriptionTextFontSize] constrainedToSize:CGSizeMake(270.0f, CGFLOAT_MAX) lineBreakMode:UILineBreakModeWordWrap].height);
-    height += kAttributedTableViewCellVerticalMargin;
-    return height;
+    static CGFloat padding = 10.0;
+
+    UIFont *systemFont = [UIFont systemFontOfSize:kEspressoDescriptionTextFontSize];
+    CGSize textSize = CGSizeMake(275.0, CGFLOAT_MAX);
+    CGSize sizeWithFont = [text sizeWithFont:systemFont constrainedToSize:textSize lineBreakMode:NSLineBreakByWordWrapping];
+
+#if defined(__LP64__) && __LP64__
+    return ceil(sizeWithFont.height) + padding;
+#else
+    return ceilf(sizeWithFont.height) + padding;
+#endif
 }
 
 #pragma mark - UIView
@@ -151,6 +163,8 @@ static inline NSRegularExpression * ParenthesisRegularExpression() {
     self.detailTextLabel.hidden = YES;
         
     self.summaryLabel.frame = CGRectOffset(CGRectInset(self.bounds, 20.0f, 5.0f), -10.0f, 0.0f);
+    
+    [self setNeedsDisplay];
 }
 
 @end

@@ -23,6 +23,7 @@
 }
 
 - (void)dealloc {
+	textView.delegate = nil;
 	[textView removeFromSuperview];
 	[textView release], textView = nil;
 	[super dealloc];
@@ -37,8 +38,7 @@
 	[self.view addSubview:textView];
 	
 	self.navigationItem.title = @"Debug Logs";
-	self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemDone target:self action:@selector(done:)];
-	self.navigationItem.leftBarButtonItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemRefresh target:self action:@selector(reloadLogs:)];
+	self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemRefresh target:self action:@selector(reloadLogs:)];
 	
 	ATLogInfo(@"%@", [[ATTaskQueue sharedTaskQueue] queueDescription]);
 	
@@ -51,10 +51,6 @@
 	[super didReceiveMemoryWarning];
 	[textView removeFromSuperview];
 	[textView release], textView = nil;
-}
-
-- (void)done:(id)sender {
-	[self dismissModalViewControllerAnimated:YES];
 }
 
 - (IBAction)reloadLogs:(id)sender {

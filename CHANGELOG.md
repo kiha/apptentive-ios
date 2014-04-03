@@ -1,3 +1,167 @@
+2014-03-29 wooster, pkamb v1.3.0
+--------------------------------
+
+Important: 
+
+* We've (provisionally) dropped iOS 4.x support. If you really need iOS 4.x support, please contact us.
+* We added `AssetsLibrary` to the list of required frameworks in this version (part of the fix for IOS-409).
+
+Fixes:
+
+* IOS-426 Drop iOS 4 Support
+* IOS-414 Add convenience method for integrating with Urban Airship (`addUrbanAirshipIntegrationWithDeviceToken:`)
+* IOS-408 Dragging down in message center moves the keyboard as well
+* IOS-388 Change `build_distribution.py` to build Release rather than Debug builds
+* IOS-429 Remove unused images in SDK
+* IOS-420 Text clipped in screenshot instructions
+* IOS-398 Crash in TTTAttributedLabel
+* IOS-421 Pull in image compression improvements
+* IOS-409 Sending horizontal panorama photos crashes message center
+* #84 dismissMessageCenterAnimated does not call completion block in some cases
+* #83 Calling dismissMessageCenterAnimated can break future calls to presentMessageCenterFromViewController
+* IOS-422 Ensure device info is sent before retrieving Interactions.
+* IOS-449 Clicking next from email entry doesn't highlight message text entry.
+
+2014-03-10 wooster, pkamb v1.2.9
+--------------------------------
+
+This release adds several small fixes to alleviate common support requests.
+
+Fixes:
+
+* IOS-415 Allow `initialUserEmailAddress` to be updated after sending feedback with no email
+* IOS-418 Ability to delete a previously entered email
+* Compressed images with ImageOptim
+* IOS-394 Log warning if passed view controller is nil 
+* IOS-364 Don't fetch surveys until at least one DeviceInfo has been sent
+* IOS-380 Re-add "sending..." label to pending messages
+
+2014-02-20 pkamb v1.2.8
+-----------------------
+
+This release fixes several issues reported by developers. We now strip NSAssert calls from the Apptentive static library. Also fixes an issue where setting a nil email address caused problems with the email validator. Additional debug logging added to make API key issues easier to recognize and debug.
+
+Fixes:
+
+* IOS-387 and #79 Set `ENABLE_NS_ASSERTIONS` to `NO` in both Debug and Release builds. (NSAssert calls now ignored).
+* IOS-386 Fixes crash when setting nil email for `initialEmailAddress`.
+* IOS-383 Added debug messages to help developer notice when API key is invalid or not set.
+* IOS-384 Added Kahuna integration key constant.
+* IOS-379 Added additional information to readme about responding to 'Unread Message' notifications.
+* Added Swedish localization file to FeedbackDemo.
+
+2014-02-12 wooster, pkamb v1.2.7
+--------------------------------
+
+This release adds a `BOOL` return type to the `engage:` method, allowing the developer to take action if an interaction is or isn't shown. The `initiallyUseMessageCenter` property has been added to set the initial Message Center state; this will be overridden when the Apptentive configuration file is first downloaded.
+
+This release also makes some behind-the-scenes tweaks to the Engagement Framework. 
+
+Fixes:
+
+* IOS-354 Add BOOL return type to `engage:` method
+* Change ATEvent monitoring from NSAssert to ATLogError.
+* Made changes to Engagement Framework criteria:
+* IOS-375 Add `is_update_version` to Enagagement Framework criteria
+* IOS-377 Change `days_since...` to `time_since...` in Engagement Framework criteria.
+* IOS-373 Add `build` property to Interactions.
+* IOS-378 Add API method to set initial/local `useMessageCenter` setting
+
+2014-01-27 wooster, pkamb v1.2.6
+--------------------------------
+This release adds support for message attachments. These text, image, or file attachments will be seen in your Apptentive online dashboard, but will not be visible in Message Center on the device.
+
+Fixes:
+
+* IOS-368 Added cases for always or never showing an interaction based on its criteria.
+* IOS-363 Changed key to "hardware" from "model". Human readable string "model" will now be set on server.
+* IOS-172 Prevent duplicate Message Center automated messages
+* [Issue #70](https://github.com/apptentive/apptentive-ios/issues/70) unreadCount incremented when typing a message
+* IOS-310 unreadMessageCount incremented when typing a message
+* IOS-341 Investigate loading of initial config file at app launch.
+* IOS-355 Strip whitespace from Survey text response
+* IOS-356 Can't see send button in Message Center with white tintColor
+* IOS-357 Add support for hidden text/file messages
+
+2014-01-10 wooster, pkamb v1.2.5
+--------------------------------
+This release fixes some minor issues and bugs. It includes some compatibility fixes for CocoaPods users and fixes for some visual issues on iOS 7.
+
+Fixes:
+
+* [Issue #74](https://github.com/apptentive/apptentive-ios/issues/74) Compilation errors when adding TTTAttributedLabel as a cocoapod
+* [Issue #75](https://github.com/apptentive/apptentive-ios/issues/75) Xcode build warnings
+* IOS-196 Add ARM 64 architecture support
+* IOS-229 Log debug info about why Survey was not shown.
+* IOS-242 FeedbackDemo: Survey text and tag
+* IOS-331 Profile page has both back and done buttons.
+* IOS-338 Text behind "No Email Address?" alert becomes pixelated.
+* IOS-343 Add `application_build` to engagement framework.
+* IOS-345 Message Center arrow visual issue
+* IOS-347 Switch to using XCTest from SenTest
+
+2013-12-20 wooster, pkamb v1.2.4
+--------------------------------
+This release includes a UI refresh for iOS 7. Specifically, the message center and message panel both have completely new UIs.
+
+Our previous UI should still work for iOS 4.3-6, with the new UI showing up on iOS 7+. There were a significant number of changes made, so we suggest you take a look and test things out with your app to see if we missed anything or if things don't look nice inside your app.
+
+Fixes:
+
+* [Issue #65](https://github.com/apptentive/apptentive-ios/issues/65) Long response is truncated in message centre on the device
+* Fixes a crash caused by setting link attributes after text on TTTAttributedLabels.
+* IOS-165 Skeuomorphic "note pad" background of Message Center in iOS 7?
+* IOS-201 Gravatar icon doesn't show up properly
+* IOS-230 Message hyperlinks are not clickable on iOS
+* IOS-259 Add `time_ago` Interaction criteria
+* IOS-276 Send milliseconds in Apptentive metrics
+* IOS-281 Blur screen behind Message Center UI
+* IOS-287 Message custom data should only be sent with the first message in a Message Center session
+* IOS-288 Don't send custom data with automated messages
+* IOS-293 Send customData with ATFileMessages
+* IOS-303 Urban Airship push notifications.
+* IOS-332 Message Center avatars are fetched from server on every load
+* IOS-336 Crash when selecting a photo
+* IOS-337 Crash and/or hang taking photos on iPad
+* IOS-340 Notification or return value when rating flow was not shown.
+
+2013-11-22 wooster, pkamb v1.2.3
+--------------------------------
+This is a release solely to fix a crash related to database migration in iOS 7.
+
+iOS 7 switched the SQLite backing store for Core Data to use write ahead logging (WAL), which make the datastore no longer consist of a single file, but several. When performing database migrations, we were creating an upgraded database then moving it into the location of the old database. Unfortunately, the `-wal` and `-shm` sidecar files that now accompanied that old database were there alongside the new upgraded database. Since these were no longer valid when SQLite tried to load them along with the new database, there were some weird exceptions and crashes happening.
+
+This release attempts to fix those problems. All new databases are created with the previous iOS default, DELETE mode. When we migrate databases with WAL mode set, we now delete the `-wal` and `-shm` sidecars before moving the new database into place. We also attempt to detect corrupt databases in existing installations and remove them if they exist. Finally, we've added a canary to tell us if we crashed while setting up our database. If we did, we delete the database and start it over from scratch.
+
+Fixes:
+
+* [Issue #71](https://github.com/apptentive/apptentive-ios/issues/71) SQLite error in Apptentive DB
+
+2013-10-22 wooster, pkamb v1.2.2
+--------------------------------
+
+This release focuses on adding upgrade messages support. See the readme for information on how to use this feature.
+
+We also added custom data on individual messages. See the docs/APIChanges.md for details.
+
+Note that you'll need to add Accelerate.framework to your project now, if it's not already there.
+
+Fixes:
+
+* IOS-202 UIActionSheet not dismissing in photo selector is causing crash
+* Fixes [Issue #62](https://github.com/apptentive/apptentive-ios/issues/62) Make font fits width on message composer screen
+* IOS-222 Generalized engagement framework for interactions
+* IOS-223 UpgradeMessage UI: Display a message when users upgrade their app to the latest version
+* IOS-230 Message hyperlinks are not clickable on iOS
+* IOS-237 Support for custom data on messages
+* IOS-240 FeedbackDemo: Change text for after they click 'Rate'
+* IOS-241 FeedbackDemo: Remove the beta symbol
+* IOS-249 Ensure background message fetch doesn't resurrect task queue
+* IOS-252 Crash when canceling photo selection on iPad + iOS 7
+* IOS-254 "We're Sorry!" message cut off on iPad
+* IOS-257 Message Center read event not including message ID
+* IOS-258 3rd-Party notification services configuration
+
 2013-10-09 wooster, pkamb v1.2.1
 -------------------------
 Fixes:

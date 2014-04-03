@@ -13,8 +13,6 @@
 #import "ATSurveys.h"
 
 @implementation FeedbackDemoAppDelegate
-
-
 @synthesize window=_window;
 
 @synthesize navigationController=_navigationController;
@@ -40,8 +38,21 @@
 	[self.window makeKeyAndVisible];
 	[[ATConnect sharedConnection] setApiKey:kApptentiveAPIKey];
 	
+	[[ATConnect sharedConnection] addIntegration:@"feedback_demo_integration_configuration" withConfiguration:@{@"fake_apiKey": @"ABC-123-XYZ"}];
+	
 	ATAppRatingFlow *flow = [ATAppRatingFlow sharedRatingFlowWithAppID:kApptentiveAppID];
 	[flow showRatingFlowFromViewControllerIfConditionsAreMet:self.navigationController];
+	
+	double delayInSeconds = 2.0;
+	dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delayInSeconds * NSEC_PER_SEC));
+	dispatch_after(popTime, dispatch_get_main_queue(), ^(void){
+		BOOL didEngageInteraction = [[ATConnect sharedConnection] engage:@"app.launch" fromViewController:self.navigationController];
+		if (didEngageInteraction) {
+			NSLog(@"Successfully engaged an interaction for code point \"app.launch\"");
+		} else {
+			NSLog(@"Did not engage any interactions for code point \"app.launch\"");
+		}
+	});
 	
 	return YES;
 }
@@ -79,6 +90,14 @@
 	 Save data if appropriate.
 	 See also applicationDidEnterBackground:.
 	 */
+}
+
+- (void)application:(UIApplication *)application didReceiveRemoteNotification:(NSDictionary *)userInfo {
+    [[ATConnect sharedConnection] didReceiveRemoteNotification:userInfo fromViewController:self.navigationController];
+}
+
+- (void)application:(UIApplication *)application didReceiveRemoteNotification:(NSDictionary *)userInfo fetchCompletionHandler:(void (^)(UIBackgroundFetchResult))completionHandler{
+	[[ATConnect sharedConnection] didReceiveRemoteNotification:userInfo fromViewController:self.navigationController];
 }
 
 - (void)dealloc {

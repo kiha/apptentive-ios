@@ -51,7 +51,7 @@
 	device[@"uuid"] = [[ATBackend sharedBackend] deviceUUID];
 	device[@"os_name"] = [ATUtilities currentSystemName];
 	device[@"os_version"] = [ATUtilities currentSystemVersion];
-	device[@"model"] = [ATUtilities currentMachineName];
+	device[@"hardware"] = [ATUtilities currentMachineName];
 	
 	NSString *carrier = [ATDeviceInfo carrier];
 	if (carrier != nil) {
@@ -76,6 +76,11 @@
 	NSDictionary *extraInfo = [[ATConnect sharedConnection] customDeviceData];
 	if (extraInfo && [extraInfo count]) {
 		device[@"custom_data"] = extraInfo;
+	}
+	
+	NSDictionary *integrationConfiguration = [[ATConnect sharedConnection] integrationConfiguration];
+	if (integrationConfiguration && [integrationConfiguration count]) {
+		device[@"integration_config"] = integrationConfiguration;
 	}
 	
 	return @{@"device":device};

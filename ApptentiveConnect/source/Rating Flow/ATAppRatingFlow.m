@@ -59,6 +59,7 @@ static CFAbsoluteTime ratingsLoadTime = 0.0;
 - (void)postNotification:(NSString *)name;
 - (void)postNotification:(NSString *)name forButton:(int)button;
 - (NSURL *)URLForRatingApp;
+- (void)userAgreedToRateApp;
 - (void)openAppStoreToRateApp;
 - (BOOL)shouldOpenAppStoreViaStoreKit;
 - (void)openAppStoreViaURL;
@@ -136,8 +137,25 @@ static CFAbsoluteTime ratingsLoadTime = 0.0;
 	return sharedRatingFlow;
 }
 
+- (void)dealloc {
+#if	TARGET_OS_IPHONE
+	enjoymentDialog.delegate = nil;
+	[enjoymentDialog release], enjoymentDialog = nil;
+	ratingDialog.delegate = nil;
+	[ratingDialog release], ratingDialog = nil;
+	self.viewController = nil;
+#endif
+	[lastUseOfApp release], lastUseOfApp = nil;
+	[appID release], appID = nil;
+	[super dealloc];
+}
+
 #if TARGET_OS_IPHONE
-- (void)showRatingFlowFromViewControllerIfConditionsAreMet:(UIViewController *)vc {
+- (BOOL)showRatingFlowFromViewControllerIfConditionsAreMet:(UIViewController *)vc {
+	if (!viewController) {
+		ATLogError(@"Attempting to show Apptentive Rating Flow from a nil View Controller.");
+	}
+	
 	self.viewController = vc;
 #	if TARGET_IPHONE_SIMULATOR
 	[self logDefaults];
@@ -146,7 +164,9 @@ static CFAbsoluteTime ratingsLoadTime = 0.0;
 	BOOL showedDialog = [self showDialogIfNecessary];
 	if (!showedDialog) {
 		self.viewController = nil;
+		[[NSNotificationCenter defaultCenter] postNotificationName:ATAppRatingDidNotPromptForEnjoymentNotification object:nil];
 	}
+	return showedDialog;
 }
 #endif
 
@@ -162,6 +182,12 @@ static CFAbsoluteTime ratingsLoadTime = 0.0;
 
 - (void)logSignificantEvent {
 	[self userDidSignificantEvent];
+}
+
+- (void)openAppStore {
+	[[NSNotificationCenter defaultCenter] postNotificationName:ATAppRatingDidManuallyOpenAppStoreToRateAppNotification object:nil];
+
+	[self openAppStoreToRateApp];
 }
 
 #pragma mark Properties
@@ -205,7 +231,7 @@ static CFAbsoluteTime ratingsLoadTime = 0.0;
 		[ratingDialog release], ratingDialog = nil;
 		if (buttonIndex == 1) { // rate
 			[self postNotification:ATAppRatingDidClickRatingButtonNotification forButton:ATAppRatingButtonTypeRateApp];
-			[self openAppStoreToRateApp];
+			[self userAgreedToRateApp];
 		} else if (buttonIndex == 2) { // remind later
 			[self postNotification:ATAppRatingDidClickRatingButtonNotification forButton:ATAppRatingButtonTypeRemind];
 			[self setRatingDialogWasShown];
@@ -230,7 +256,7 @@ static CFAbsoluteTime ratingsLoadTime = 0.0;
 
 #pragma mark SKStoreProductViewControllerDelegate
 - (void)productViewControllerDidFinish:(SKStoreProductViewController *)productViewController {
-	[productViewController dismissModalViewControllerAnimated:YES];
+	[productViewController dismissViewControllerAnimated:YES completion:NULL];
 }
 #endif
 @end
@@ -287,9 +313,14 @@ static CFAbsoluteTime ratingsLoadTime = 0.0;
 }
 #endif
 
+- (void)userAgreedToRateApp {
+	[[NSNotificationCenter defaultCenter] postNotificationName:ATAppRatingFlowUserAgreedToRateAppNotification object:nil];
+	
+	[self openAppStoreToRateApp];
+}
+
 - (void)openAppStoreToRateApp {
 	[self setRatedApp:YES];
-	[[NSNotificationCenter defaultCenter] postNotificationName:ATAppRatingFlowUserAgreedToRateAppNotification object:nil];
 		
 #if TARGET_OS_IPHONE
 #	if TARGET_IPHONE_SIMULATOR
@@ -338,7 +369,7 @@ static CFAbsoluteTime ratingsLoadTime = 0.0;
 				[self showUnableToOpenAppStoreDialog];
 			} else {
 				UIViewController *presentingVC = [self rootViewControllerForCurrentWindow];
-				[presentingVC presentModalViewController:vc animated:YES];
+				[presentingVC presentViewController:vc animated:YES completion:^{}];
 			}
 		}];
 	}
@@ -588,9 +619,12 @@ static CFAbsoluteTime ratingsLoadTime = 0.0;
 - (void)logDefaults {
 	NSArray *keys = [NSArray arrayWithObjects:ATAppRatingFlowLastUsedVersionKey, ATAppRatingFlowLastUsedVersionFirstUseDateKey, ATAppRatingFlowDeclinedToRateThisVersionKey, ATAppRatingFlowUserDislikesThisVersionKey, ATAppRatingFlowPromptCountThisVersionKey, ATAppRatingFlowLastPromptDateKey, ATAppRatingFlowUseCountKey, ATAppRatingFlowSignificantEventsCountKey, ATAppRatingFlowRatedAppKey, nil];
 	ATLogDebug(@"-- BEGIN ATAppRatingFlow DEFAULTS --");
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-variable"
 	for (NSString *key in keys) {
 		ATLogDebug(@"%@ == %@", key, [[NSUserDefaults standardUserDefaults] objectForKey:key]);
 	}
+#pragma clang diagnostic pop
 	ATLogDebug(@"-- END ATAppRatingFlow DEFAULTS --");
 }
 
@@ -639,9 +673,6 @@ static CFAbsoluteTime ratingsLoadTime = 0.0;
 		UIViewController *vc = [window rootViewController];
 		if ([vc respondsToSelector:@selector(presentedViewController)] && [vc presentedViewController]) {
 			return [vc presentedViewController];
-		}
-		if ([vc respondsToSelector:@selector(modalViewController)] && [vc modalViewController]) {
-			return [vc modalViewController];
 		}
 		return vc;
 	} else {
@@ -709,6 +740,27 @@ static CFAbsoluteTime ratingsLoadTime = 0.0;
 	usesBeforePrompt = [(NSNumber *)[defaults objectForKey:ATAppRatingUsesBeforePromptPreferenceKey] unsignedIntegerValue];
 	significantEventsBeforePrompt = [(NSNumber *)[defaults objectForKey:ATAppRatingSignificantEventsBeforePromptPreferenceKey] unsignedIntegerValue];
 	daysBeforeRePrompting = [(NSNumber *)[defaults objectForKey:ATAppRatingDaysBetweenPromptsPreferenceKey] unsignedIntegerValue];
+	
+	// Log info about current rating flow configuration
+	ATAppRatingFlowPredicateInfo *info = [[ATAppRatingFlowPredicateInfo alloc] init];
+	info.firstUse = [[NSUserDefaults standardUserDefaults] objectForKey:ATAppRatingFlowLastUsedVersionFirstUseDateKey];
+	info.significantEvents = [[[NSUserDefaults standardUserDefaults] objectForKey:ATAppRatingFlowSignificantEventsCountKey] unsignedIntegerValue];
+	info.appUses = [[[NSUserDefaults standardUserDefaults] objectForKey:ATAppRatingFlowUseCountKey] unsignedIntegerValue];
+	info.daysBeforePrompt = self.daysBeforePrompt;
+	info.significantEventsBeforePrompt = self.significantEventsBeforePrompt;
+	info.usesBeforePrompt = self.usesBeforePrompt;
+	NSPredicate *predicate = [ATAppRatingFlow_Private predicateForPromptLogic:[[NSUserDefaults standardUserDefaults] objectForKey:ATAppRatingPromptLogicPreferenceKey] withPredicateInfo:info];
+	NSString *usageData = [NSString stringWithFormat:@"appUses: %ld, usesBeforePrompt: %ld, significantEvents: %ld, significantEventsBeforePrompt: %ld, firstUse: %@, daysBeforePrompt: %ld,", (long)info.appUses, (long)info.usesBeforePrompt, (long)info.significantEvents, (long)info.significantEventsBeforePrompt, info.firstUse, (long)info.daysBeforePrompt];
+
+	BOOL fromServer = [[NSUserDefaults standardUserDefaults] boolForKey:ATAppRatingSettingsAreFromServerPreferenceKey];
+	if (fromServer) {
+		ATLogInfo(@"Rating Flow: Using custom configuration retrieved from Apptentive");
+	} else {
+		ATLogInfo(@"Rating Flow: Using defaults until custom configuration can be retrieved from Apptentive");
+	}
+	ATLogInfo(@"Rating Flow usage data: %@", usageData);
+	ATLogInfo(@"Rating Flow conditions: %@", predicate);
+	[info release], info = nil;
 }
 @end
 
@@ -796,7 +848,7 @@ static CFAbsoluteTime ratingsLoadTime = 0.0;
 	} else if (result == NSAlertSecondButtonReturn) { // remind me
 		[self setRatingDialogWasShown];
 	} else if (result == NSAlertThirdButtonReturn) { // rate app
-		[self openAppStoreToRateApp];
+		[self userAgreedToRateApp];
 	}
 #endif
 }

@@ -20,6 +20,7 @@
 #import "ATRecordRequestTask.h"
 #import "ATSurveyMetrics.h"
 #import "ATTaskQueue.h"
+#import "ATInteractionUpgradeMessageViewController.h"
 
 static NSString *ATMetricNameEnjoymentDialogLaunch = @"enjoyment_dialog.launch";
 static NSString *ATMetricNameEnjoymentDialogYes = @"enjoyment_dialog.yes";
@@ -29,6 +30,7 @@ static NSString *ATMetricNameRatingDialogLaunch = @"rating_dialog.launch";
 static NSString *ATMetricNameRatingDialogRate = @"rating_dialog.rate";
 static NSString *ATMetricNameRatingDialogRemind = @"rating_dialog.remind";
 static NSString *ATMetricNameRatingDialogDecline = @"rating_dialog.decline";
+static NSString *ATMetricNameRatingDidManuallyOpenAppStore = @"app_store.manual_open";
 
 static NSString *ATMetricNameFeedbackDialogLaunch = @"feedback_dialog.launch";
 static NSString *ATMetricNameFeedbackDialogCancel = @"feedback_dialog.cancel";
@@ -55,6 +57,9 @@ static NSString *ATMetricNameMessageCenterThankYouLaunch = @"message_center.than
 static NSString *ATMetricNameMessageCenterThankYouMessages = @"message_center.thank_you.messages";
 static NSString *ATMetricNameMessageCenterThankYouClose = @"message_center.thank_you.close";
 
+static NSString *ATMetricNameInteractionUpgradeMessageLaunch = @"upgrade_message.launch";
+static NSString *ATMetricNameInteractionUpgradeMessageClose = @"upgrade_message.close";
+
 @interface ApptentiveMetrics (Private)
 - (void)addLaunchMetric;
 - (void)addMetricWithName:(NSString *)name info:(NSDictionary *)userInfo;
@@ -64,11 +69,13 @@ static NSString *ATMetricNameMessageCenterThankYouClose = @"message_center.thank
 
 - (ATAppRatingEnjoymentButtonType)appEnjoymentButtonTypeFromNotification:(NSNotification *)notification;
 - (void)ratingDidShowEnjoyment:(NSNotification *)notification;
+- (void)ratingDidNotShowEnjoyment:(NSNotification *)notification;
 - (void)ratingDidClickEnjoyment:(NSNotification *)notification;
 
 - (ATAppRatingButtonType)appRatingButtonTypeFromNotification:(NSNotification *)notification;
 - (void)ratingDidShowRating:(NSNotification *)notification;
 - (void)ratingDidClickRating:(NSNotification *)notification;
+- (void)ratingDidManuallyOpenAppStore:(NSNotification *)notification;
 
 - (ATSurveyEvent)surveyEventTypeFromNotification:(NSNotification *)notification;
 - (void)surveyDidShow:(NSNotification *)notification;
@@ -91,6 +98,9 @@ static NSString *ATMetricNameMessageCenterThankYouClose = @"message_center.thank
 - (void)messageCenterIntroThankYouDidLaunch:(NSNotification *)notification;
 - (void)messageCenterIntroThankYouHitMessages:(NSNotification *)notification;
 - (void)messageCenterIntroThankYouDidClose:(NSNotification *)notification;
+
+- (void)interactionUpgradeMessageDidLaunch:(NSNotification *)notification;
+- (void)interactionUpgradeMessageDidClose:(NSNotification *)notification;
 
 - (void)preferencesChanged:(NSNotification *)notification;
 
@@ -127,9 +137,11 @@ static NSString *ATMetricNameMessageCenterThankYouClose = @"message_center.thank
 		[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(feedbackDidShowWindow:) name:ATFeedbackDidShowWindowNotification object:nil];
 		[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(feedbackDidHideWindow:) name:ATFeedbackDidHideWindowNotification object:nil];
 		[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(ratingDidShowEnjoyment:) name:ATAppRatingDidPromptForEnjoymentNotification object:nil];
+		[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(ratingDidNotShowEnjoyment:) name:ATAppRatingDidNotPromptForEnjoymentNotification object:nil];
 		[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(ratingDidClickEnjoyment:) name:ATAppRatingDidClickEnjoymentButtonNotification object:nil];
 		[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(ratingDidShowRating:) name:ATAppRatingDidPromptForRatingNotification object:nil];
 		[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(ratingDidClickRating:) name:ATAppRatingDidClickRatingButtonNotification object:nil];
+		[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(ratingDidManuallyOpenAppStore:) name:ATAppRatingDidManuallyOpenAppStoreToRateAppNotification object:nil];
 		
 		
 		[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(surveyDidShow:) name:ATSurveyDidShowWindowNotification object:nil];
@@ -162,6 +174,9 @@ static NSString *ATMetricNameMessageCenterThankYouClose = @"message_center.thank
 		[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(messageCenterIntroThankYouDidLaunch:) name:ATMessageCenterIntroThankYouDidShowNotification object:nil];
 		[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(messageCenterIntroThankYouHitMessages:) name:ATMessageCenterIntroThankYouHitMessagesNotification object:nil];
 		[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(messageCenterIntroThankYouDidClose:) name:ATMessageCenterIntroThankYouDidCloseNotification object:nil];
+		
+		[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(interactionUpgradeMessageDidLaunch:) name:ATInteractionUpgradeMessageLaunch object:nil];
+		[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(interactionUpgradeMessageDidClose:) name:ATInteractionUpgradeMessageClose object:nil];
 	}
 }
 
@@ -291,6 +306,10 @@ static NSString *ATMetricNameMessageCenterThankYouClose = @"message_center.thank
 	[self addMetricWithName:ATMetricNameEnjoymentDialogLaunch info:nil];
 }
 
+- (void)ratingDidNotShowEnjoyment:(NSNotification *)notification {
+	// Not logging metrics for non-shown Enjoyment dialogs.
+}
+
 - (void)ratingDidClickEnjoyment:(NSNotification *)notification {
 	ATAppRatingEnjoymentButtonType buttonType = [self appEnjoymentButtonTypeFromNotification:notification];
 	if (buttonType == ATAppRatingEnjoymentButtonTypeYes) {
@@ -328,6 +347,10 @@ static NSString *ATMetricNameMessageCenterThankYouClose = @"message_center.thank
 	if (name != nil) {
 		[self addMetricWithName:name info:nil];
 	}
+}
+
+- (void)ratingDidManuallyOpenAppStore:(NSNotification *)notification {
+	[self addMetricWithName:ATMetricNameRatingDidManuallyOpenAppStore info:nil];
 }
 
 - (ATSurveyEvent)surveyEventTypeFromNotification:(NSNotification *)notification {
@@ -459,6 +482,14 @@ static NSString *ATMetricNameMessageCenterThankYouClose = @"message_center.thank
 
 - (void)messageCenterIntroThankYouDidClose:(NSNotification *)notification {
 	[self addMetricWithName:ATMetricNameMessageCenterThankYouClose info:nil];
+}
+
+- (void)interactionUpgradeMessageDidLaunch:(NSNotification *)notification {
+	[self addMetricWithName:ATMetricNameInteractionUpgradeMessageLaunch info:nil];
+}
+
+- (void)interactionUpgradeMessageDidClose:(NSNotification *)notification {
+	[self addMetricWithName:ATMetricNameInteractionUpgradeMessageClose info:nil];
 }
 
 - (void)preferencesChanged:(NSNotification *)notification {

@@ -26,6 +26,8 @@
 @dynamic errorMessageJSON;
 @dynamic sender;
 @dynamic displayTypes;
+@dynamic customData;
+@dynamic hidden;
 
 + (NSObject *)newInstanceWithJSON:(NSDictionary *)json {
 	NSAssert(NO, @"Abstract method called.");
@@ -141,6 +143,65 @@
 	if (self.pendingMessageID != nil) {
 		result[@"nonce"] = self.pendingMessageID;
 	}
+	if (self.customData) {
+		NSDictionary *customDataDictionary = [self dictionaryForCustomData];
+		if (customDataDictionary && customDataDictionary.count) {
+			result[@"custom_data"] = customDataDictionary;
+		}
+	}
+	if (self.hidden != nil) {
+		result[@"hidden"] = self.hidden;
+	}
+	
 	return result;
 }
+
+- (void)setCustomDataValue:(id)value forKey:(NSString *)key {
+	NSDictionary *customData = [self dictionaryForCustomData];
+	NSMutableDictionary *mutableCustomData = nil;
+	if (customData == nil) {
+		mutableCustomData = [NSMutableDictionary dictionary];
+	} else {
+		mutableCustomData = [[customData mutableCopy] autorelease];
+	}
+	[mutableCustomData setValue:value forKey:key];
+	self.customData = [self dataForDictionary:mutableCustomData];
+}
+
+- (void)addCustomDataFromDictionary:(NSDictionary *)dictionary {
+	NSDictionary *customData = [self dictionaryForCustomData];
+	NSMutableDictionary *mutableCustomData = nil;
+	if (customData == nil) {
+		mutableCustomData = [NSMutableDictionary dictionary];
+	} else {
+		mutableCustomData = [[customData mutableCopy] autorelease];
+	}
+	if (dictionary != nil) {
+		[mutableCustomData addEntriesFromDictionary:dictionary];
+	}
+	self.customData = [self dataForDictionary:mutableCustomData];
+}
+
+- (NSDictionary *)dictionaryForCustomData {
+	if (self.customData == nil) {
+		return @{};
+	} else {
+		NSDictionary *result = nil;
+		@try {
+			result = [NSKeyedUnarchiver unarchiveObjectWithData:self.customData];
+		} @catch (NSException *exception) {
+			ATLogError(@"Unable to unarchive event: %@", exception);
+		}
+		return result;
+	}
+}
+
+- (NSData *)dataForDictionary:(NSDictionary *)dictionary {
+	if (dictionary == nil) {
+		return nil;
+	} else {
+		return [NSKeyedArchiver archivedDataWithRootObject:dictionary];
+	}
+}
+
 @end

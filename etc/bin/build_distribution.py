@@ -33,9 +33,9 @@ def chdir(path):
 		os.chdir(curdir)
 
 def escape_arg(argument):
-    """Escapes an argument to a command line utility."""
-    argument = argument.replace('\\', "\\\\").replace("'", "\'").replace('"', '\\"').replace("!", "\\!").replace("`", "\\`")
-    return "\"%s\"" % argument
+	"""Escapes an argument to a command line utility."""
+	argument = argument.replace('\\', "\\\\").replace("'", "\'").replace('"', '\\"').replace("!", "\\!").replace("`", "\\`")
+	return "\"%s\"" % argument
 
 def run_command(command, verbose=False):
 	if verbose:
@@ -52,7 +52,6 @@ def run_command(command, verbose=False):
 class Builder(object):
 	COCOAPODS_DIST = "COCOAPODS_DIST"
 	BINARY_DIST = "BINARY_DIST"
-	TRIGGER_IO_DIST = "TRIGGER_IO_DIST"
 	build_root = "/tmp/apptentive_connect_build"
 	dist_type = None
 	def __init__(self, verbose=False, dist_type=None):
@@ -60,25 +59,23 @@ class Builder(object):
 			dist_type = self.BINARY_DIST
 		self.verbose = verbose
 		self.dist_type = dist_type
-		if dist_type not in [self.COCOAPODS_DIST, self.BINARY_DIST, self.TRIGGER_IO_DIST]:
+		if dist_type not in [self.COCOAPODS_DIST, self.BINARY_DIST]:
 			log("Unknown dist_type: %s" % dist_type)
 			sys.exit(1)
 	
 	def build(self):
-		# First, build the simulator target.
 		with chdir(self._project_dir()):
-			sim_build_command = self._build_command(is_simulator=True)
-			(status, output) = run_command(sim_build_command, verbose=self.verbose)
-			if status != 0:
-				log("Building for simulator failed with code: %d" % status)
-				log(output)
-				return False
-			dev_build_command = self._build_command()
-			(status, output) = run_command(dev_build_command, verbose=self.verbose)
-			if status != 0:
-				log("Building for device failed with code: %d" % status)
-				log(output)
-				return False
+			# Build for simulator and device, each 64bit and not.
+			for is_simulator in [True, False]:
+				for is_64bit in [True, False]:
+					build_command = self._build_command(is_simulator=is_simulator, is_64bit=is_64bit)
+					(status, output) = run_command(build_command, verbose=self.verbose)
+					if status != 0:
+						target_type = "simulator" if is_simulator else "device"
+						arch_type = "64bit" if is_64bit else "not 64bit"
+						log("Building for %s %s failed with code: %d" % (target_type, arch_type, status))
+						log(output)
+						return False
 			library_dir = self._output_dir()
 			try:
 				if os.path.exists(library_dir):
@@ -120,15 +117,10 @@ class Builder(object):
 				plist[plist_key] = "CocoaPods"
 			elif self.dist_type == self.BINARY_DIST:
 				plist[plist_key] = "binary"
-			elif self.dist_type == self.TRIGGER_IO_DIST:
-				plist[plist_key] = "Trigger.io"
 			else:
 				log("Unknown dist_type")
 				return False
 			biplist.writePlist(plist, bundle_plist_path)
-		
-		if self.dist_type == self.TRIGGER_IO_DIST:
-			self._triggerio_postprocess()
 		
 		# Try to get the version.
 		version = None
@@ -143,8 +135,6 @@ class Builder(object):
 					filename = 'apptentive_ios_sdk-%s.tar.gz' % version
 				elif self.dist_type == self.COCOAPODS_DIST:
 					filename = 'apptentive_ios_sdk-cocoapods-%s.tar.gz' % version
-				elif self.dist_type == self.TRIGGER_IO_DIST:
-					filename = 'apptentive_ios_sdk-trigger_io-%s.tar.gz' % version
 			tar_command = "tar -zcvf ../%s ." % filename
 			(status, output) = run_command(tar_command, verbose=self.verbose)
 			if status != 0:
@@ -154,40 +144,22 @@ class Builder(object):
 			run_command("open .")
 		return True
 	
-	def _triggerio_postprocess(self):
-		with chdir(self._output_dir()):
-			# Generate build_steps.json file.
-			build_steps_json = [
-				{'do': { "add_ios_system_framework" : {"framework":"CoreText.framework"}}},
-				{'do': { "add_ios_system_framework" : {"framework":"CoreTelephony.framework"}}},
-				{'do': { "add_ios_system_framework" : {"framework":"CoreData.framework"}}},
-				{'do': { "add_ios_system_framework" : {"framework":"QuartzCore.framework"}}},
-				{'do': { "add_ios_system_framework" : {"framework":"StoreKit.framework"}}}
-			]
-			with open("build_steps.json", "w") as f:
-				json.dump(build_steps_json, f, indent=4)
-			os.makedirs("bundles/apptentive.bundle")
-			shutil.move("ApptentiveResources.bundle", "bundles/apptentive.bundle/ApptentiveResources.bundle")
-			shutil.move("libApptentiveConnect.a", "module.a")
-			shutil.rmtree("include")
-			os.remove("LICENSE.txt")
-			os.remove("README.md")
-			os.remove("CHANGELOG.md")
-	
 	def _project_dir(self):
 		return os.path.realpath(os.path.join(get_dirname(), "..", "..", "ApptentiveConnect"))
 	
 	def _output_dir(self):
 		return os.path.join(self.build_root, "library_dir")
 	
-	def _products_dir(self, is_simulator=False):
+	def _products_dir(self, is_simulator=False, is_64bit=False):
 		products_dir = os.path.join(self.build_root, "device_product")
 		if is_simulator:
 			products_dir = os.path.join(self.build_root, "simulator_product")
+		if is_64bit:
+			products_dir += "_64bit"
 		return products_dir
 	
-	def _xcode_options(self, is_simulator=False):
-		products_dir = self._products_dir(is_simulator=is_simulator)
+	def _xcode_options(self, is_simulator=False, is_64bit=False):
+		products_dir = self._products_dir(is_simulator=is_simulator, is_64bit=is_64bit)
 		symroot = os.path.join(self.build_root, "symroot")
 		temp_dir = os.path.join(self.build_root, "target_temp_dir")
 		return "CONFIGURATION_BUILD_DIR=%s SYMROOT=%s TARGET_TEMP_DIR=%s" % (escape_arg(products_dir), escape_arg(symroot), escape_arg(temp_dir))
@@ -198,13 +170,24 @@ class Builder(object):
 		output_library = os.path.join(output_dir, lib)
 		input_a = os.path.join(self._products_dir(is_simulator=True), lib)
 		input_b = os.path.join(self._products_dir(is_simulator=False), lib)
-		return """xcrun lipo -create -output %s %s %s""" % (escape_arg(output_library), escape_arg(input_a), escape_arg(input_b))
+		input_c = os.path.join(self._products_dir(is_simulator=True, is_64bit=True), lib)
+		input_d = os.path.join(self._products_dir(is_simulator=False, is_64bit=True), lib)
+		return """xcrun lipo -create -output %s %s %s %s %s""" % (escape_arg(output_library), escape_arg(input_a), escape_arg(input_b), escape_arg(input_c), escape_arg(input_d))
 	
-	def _build_command(self, is_simulator=False):
+	def _build_command(self, is_simulator=False, is_64bit=False):
 		sdk = 'iphoneos'
 		if is_simulator:
 			sdk = 'iphonesimulator'
-		return """xcrun xcodebuild -target ApptentiveConnect -configuration Debug -sdk %s %s""" % (sdk, self._xcode_options(is_simulator=is_simulator))
+		command = """xcrun xcodebuild -target ApptentiveConnect -configuration Release -sdk %s %s""" % (sdk, self._xcode_options(is_simulator=is_simulator, is_64bit=is_64bit))
+		if is_64bit and is_simulator:
+			command += " ARCHS='x86_64' IPHONEOS_DEPLOYMENT_TARGET='7.0' VALID_ARCHS='x86_64'"
+		elif is_simulator and not is_64bit:
+			command += " ARCHS='i386' IPHONEOS_DEPLOYMENT_TARGET='5.0' VALID_ARCHS='i386'"
+		elif is_64bit:
+			command += " ARCHS='arm64' IPHONEOS_DEPLOYMENT_TARGET='7.0' VALID_ARCHS='arm64'"
+		elif not is_simulator and not is_64bit:
+			command += " ARCHS='armv7 armv7s' IPHONEOS_DEPLOYMENT_TARGET='5.0' VALID_ARCHS='armv7 armv7s'"
+		return command
 	
 	def _project_path(self, filename):
 		"""Returns the file within the project directory for the given filename."""
@@ -215,11 +198,11 @@ class Builder(object):
 		return run_command(command, verbose=self.verbose)
 
 if __name__ == "__main__":
-	for dist_type in [Builder.BINARY_DIST, Builder.COCOAPODS_DIST, Builder.TRIGGER_IO_DIST]:
+	for dist_type in [Builder.BINARY_DIST, Builder.COCOAPODS_DIST]:
 		builder = Builder(dist_type=dist_type)
 		result = builder.build()
 		if result == True:
-			log("Build suceeded")
+			log("Build succeeded")
 		else:
 			log("Build failed!")
 			break

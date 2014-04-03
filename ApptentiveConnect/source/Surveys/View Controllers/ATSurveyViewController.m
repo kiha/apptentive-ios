@@ -191,7 +191,7 @@ enum {
 	
 	[[ATSurveysBackend sharedBackend] setDidSendSurvey:survey];
 	[[ATSurveysBackend sharedBackend] resetSurvey];
-	[self.navigationController dismissModalViewControllerAnimated:YES];
+	[self.navigationController dismissViewControllerAnimated:YES completion:NULL];
 	
 	[[NSNotificationCenter defaultCenter] postNotificationName:ATSurveySentNotification object:nil userInfo:notificationInfo];
 	[notificationInfo release], notificationInfo = nil;
@@ -209,6 +209,10 @@ enum {
 
 - (void)viewDidLoad {
 	[super viewDidLoad];
+	
+	if ([[ATConnect sharedConnection] tintColor] && [self.view respondsToSelector:@selector(setTintColor:)]) {
+		[self.navigationController.view setTintColor:[[ATConnect sharedConnection] tintColor]];
+	}
 	
 	if (![survey responseIsRequired]) {
 		self.navigationItem.leftBarButtonItem = [[[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemCancel target:self action:@selector(cancel:)] autorelease];
@@ -293,7 +297,18 @@ enum {
 		
 		CGSize cellSize = CGSizeMake(cell.textLabel.bounds.size.width, 1024);
 		NSLineBreakMode lbm = cell.textLabel.lineBreakMode;
-		CGSize s = [cell.textLabel.text sizeWithFont:font constrainedToSize:cellSize lineBreakMode:lbm];
+		CGSize s = CGSizeZero;
+		if ([cell.textLabel.text respondsToSelector:@selector(sizeWithAttributes:)]) {
+			NSDictionary *attrs = @{NSFontAttributeName: font};
+			NSAttributedString *attributedText = [[[NSAttributedString alloc] initWithString:cell.textLabel.text attributes:attrs] autorelease];
+			CGRect textSize = [attributedText boundingRectWithSize:cellSize options:NSStringDrawingUsesLineFragmentOrigin context:nil];
+			s = textSize.size;
+		} else {
+#			pragma clang diagnostic push
+#			pragma clang diagnostic ignored "-Wdeprecated-declarations"
+			s = [cell.textLabel.text sizeWithFont:font constrainedToSize:cellSize lineBreakMode:lbm];
+#			pragma clang diagnostic pop
+		}
 		CGRect f = cell.textLabel.frame;
 		f.size = s;
 #if DEBUG_CELL_HEIGHT_PROBLEM
@@ -334,7 +349,7 @@ enum {
 		if (!buttonCell) {
 			buttonCell = [[[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:ATSurveySendCellIdentifier] autorelease];
 			buttonCell.textLabel.text = ATLocalizedString(@"Send Response", @"Survey send response button title");
-			buttonCell.textLabel.textAlignment = UITextAlignmentCenter;
+			buttonCell.textLabel.textAlignment = NSTextAlignmentCenter;
 			buttonCell.textLabel.textColor = [UIColor blueColor];
 			buttonCell.selectionStyle = UITableViewCellSelectionStyleBlue;
 		}
@@ -351,7 +366,7 @@ enum {
 			cell = [[[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:ATSurveyQuestionCellIdentifier] autorelease];
 			cell.textLabel.numberOfLines = 0;
 			cell.textLabel.adjustsFontSizeToFitWidth = NO;
-			cell.textLabel.lineBreakMode = UILineBreakModeWordWrap;
+			cell.textLabel.lineBreakMode = NSLineBreakByWordWrapping;
 			cell.backgroundColor = [UIColor colorWithRed:223/255. green:235/255. blue:247/255. alpha:1.0];
 #if DEBUG_CELL_HEIGHT_PROBLEM
 			cell.textLabel.backgroundColor = [UIColor redColor];
@@ -370,7 +385,7 @@ enum {
 			cell.textLabel.font = [UIFont systemFontOfSize:15];
 			cell.textLabel.numberOfLines = 0;
 			cell.textLabel.adjustsFontSizeToFitWidth = NO;
-			cell.textLabel.lineBreakMode = UILineBreakModeWordWrap;
+			cell.textLabel.lineBreakMode = NSLineBreakByWordWrapping;
 		}
 		NSString *text = nil;
 		if (question.instructionsText) {
@@ -399,14 +414,14 @@ enum {
 			cell.textLabel.text = answer.value;
 			cell.textLabel.numberOfLines = 0;
 			cell.textLabel.adjustsFontSizeToFitWidth = NO;
-			cell.textLabel.lineBreakMode = UILineBreakModeWordWrap;
+			cell.textLabel.lineBreakMode = NSLineBreakByWordWrapping;
 			if ([[question selectedAnswerChoices] containsObject:answer]) {
 				cell.accessoryType = UITableViewCellAccessoryCheckmark;
 			} else {
 				cell.accessoryType = UITableViewCellAccessoryNone;
 			}
 			[cell layoutSubviews];
-		} else if (question.type == ATSurveyQuestionTypeSingeLine && question.multiline == YES) {
+		} else if (question.type == ATSurveyQuestionTypeSingeLine && question.multiline) {
 			// Make a text entry cell.
 			if (activeTextView != nil && activeTextEntryCell != nil && activeTextView.cellPath.row == indexPath.row && activeTextView.cellPath.section == indexPath.section) {
 				cell = activeTextEntryCell;
@@ -538,7 +553,7 @@ enum {
 				} else if (isChecked == NO) {
 					cell.accessoryType = UITableViewCellAccessoryCheckmark;
 					[question addSelectedAnswerChoice:answer];
-				} else if (isChecked == YES) {
+				} else if (isChecked) {
 					cell.accessoryType = UITableViewCellAccessoryNone;
 					[question removeSelectedAnswerChoice:answer];
 				}
@@ -757,7 +772,7 @@ enum {
 	[[NSNotificationCenter defaultCenter] postNotificationName:ATSurveyDidHideWindowNotification object:nil userInfo:metricsInfo];
 	[metricsInfo release], metricsInfo = nil;
 	
-	[self.navigationController dismissModalViewControllerAnimated:YES];
+	[self.navigationController dismissViewControllerAnimated:YES completion:NULL];
 }
 
 #pragma mark Keyboard Handling
